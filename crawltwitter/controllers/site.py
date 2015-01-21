@@ -22,7 +22,10 @@ def twitter_pre_signin():
     auth = tweepy.OAuthHandler(
         current_app.config['CONSUMER_TOKEN'],
         current_app.config['CONSUMER_SECRET'],
+        # for pro
         "http://crawller.ifanan.com/twitter_signin"
+        # for debug
+        # "http://localhost:5000/twitter_signin"
     )
     try:
         redirect_url = auth.get_authorization_url()
@@ -170,6 +173,7 @@ def tweets():
 
 @bp.route('/add_user', methods=['GET', 'POST'])
 def add_user():
+    # screen_name唯一
     form = UserForm()
     if form.validate_on_submit():
         names = [form.screen_name1.data.strip(),
@@ -199,28 +203,34 @@ def add_user():
                                           )
                     api = tweepy.API(auth)
                     target_user = api.get_user(name)
-                    user = User(user_id=target_user.id_str,
-                                name=target_user.name,
-                                screen_name=target_user.screen_name,
-                                location=target_user.location,
-                                statuses_count=target_user.statuses_count,
-                                followers_count=target_user.followers_count,
-                                friends_count=target_user.friends_count,
-                                created_at=target_user.created_at, is_target=True
-                                )
-                    # print accesstoken.user.friends_count
-                    # 如果当前有access_token尚未关注该目标用户
-                    # 此时需考虑其他有合法access_token账户可能已经关注该用户，会造成status重复
-                    if not target_user.id in api.friends_ids(accesstoken.user.user_id):
-                        api.create_friendship(target_user.id)
-                        # me = api.me()
-                        # print me.friends_count
+                    if target_user:
+                        user = User(user_id=target_user.id_str,
+                                    name=target_user.name,
+                                    screen_name=target_user.screen_name,
+                                    location=target_user.location,
+                                    statuses_count=target_user.statuses_count,
+                                    followers_count=target_user.followers_count,
+                                    friends_count=target_user.friends_count,
+                                    created_at=target_user.created_at, is_target=True
+                                    )
+                        # print accesstoken.user.friends_count
+                        # 如果当前有合法access_token的用户尚未关注该目标用户
+                        # 此时需考虑其他有合法access_token账户可能已经关注该用户，会造成status重复
+                        # 在Status中需考虑去重
+                        if not target_user.id in api.friends_ids(accesstoken.user.user_id):
+                            api.create_friendship(target_user.id)
+                            # me = api.me()
+                            # print me.friends_count
+                        else:
+                            flash(
+                                name + '已经被screen_name为' +
+                                accesstoken.user.screen_name + '的人关注'
+                            )
+                        # 两种情况都需要添加改目标用户
+                        # 将该用户添加为待监测用户，从home_timeline中只取目标用户的tweet
                         db.session.add(user)
                     else:
-                        flash(
-                            name + '已经被screen_name为' +
-                            accesstoken.user.screen_name + '的人关注'
-                        )
+                        flash('没有找到screen_name为' + name + '的人')
                 else:
                     if name not in repeatedNames:
                         repeatedNames += ' [' + name + '] '

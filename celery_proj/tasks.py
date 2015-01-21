@@ -20,10 +20,11 @@ config = load_config()
 def crawl_user_timeline():
     flask_app = create_app()
     with flask_app.app_context():
-        users_dict = {}
-        users = User.query.all()
-        for user in users:
-            users_dict[user.user_id] = user.id
+        # 记录待添监测用户的user_id和id，其中id用于外键链接，user_id与api交互
+        target_users_dict = {}
+        target_users = User.query.filter_by(is_target=True).all()
+        for target_user in target_users:
+            target_users_dict[target_user.user_id] = target_user.id
 
         # 抓取每一个有合法access_token用户的homeline
         accesstokens = AccessToken.query.filter_by(is_valid=True).all()
@@ -68,9 +69,17 @@ def crawl_user_timeline():
                     # status.created_at是utc时间
                     # 转为utc+8
                     # str(datetime.strptime(status.created_at, "%Y-%m-%d %H:%M:%S")+timedelta(hours=8))
-                    ss = Status(status_id=status.id_str, text=status.text,
-                                created_at=status.created_at,
-                                user_id=users_dict[status.user.id_str]
-                                )
-                    db.session.add(ss)
+                    # 只添加目标用户的tweet
+                    if status.user.id_str in target_users_dict:
+                        ss = Status(status_id=status.id_str,
+                                    text=status.text,
+                                    created_at=status.created_at,
+                                    user_id=target_users_dict[
+                                        status.user.id_str]
+                                    )
+                        db.session.add(ss)
+                    else:
+                        # celery中记录中文日志在/var/log/celery/crawltwitter-work.log会乱码
+                        # 目前未解决
+                        print 'userid:' + str(status.user.id_str) + '，　status_id:' + str(status.id_str)
             db.session.commit()
