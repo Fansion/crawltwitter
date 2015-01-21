@@ -1,0 +1,11 @@
+flask
+Flask-Script
+flask_debugtoolbar
+tweepy
+SQLAlchemy
+Flask-Migrate
+celery
+MySQL-python
+redis
+flower
+flask-wtf

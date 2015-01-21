@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import horizontal_field %}
+
+{% block page_title %}添加用户页
+{% endblock %}
+{% block page_id %}page-users
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+        <form id="form-add" class="form-horizontal" method="POST" action="{{ url_for('site.add_user') }}">
+            <fieldset>
+                <legend>添加待监测用户</legend>
+                {{ form.csrf_token }}
+                {{ horizontal_field(form.screen_name1) }}
+                {{ horizontal_field(form.screen_name2) }}
+                {{ horizontal_field(form.screen_name3) }}
+                {{ horizontal_field(form.screen_name4) }}
+                {{ horizontal_field(form.screen_name5) }}
+
+                <div class="form-group">
+                    <div class="col-md-3 col-md-offset-2">
+                        <input type="submit" value="提交" class="btn btn-sm btn-primary" />
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+
+    </div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import field_errors, horizontal_field, pagination %}
+
+{% block page_title %}所有推文页
+{% endblock %}
+{% block page_id %}page-tweets
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+        <legend>所有推文</legend>
+        {% if statuses.items %}
+            <table class="table table-bordered">
+                <tr>
+                    <td>作者</td>
+                    <td>内容</td>
+                    <td>时间</td>
+                    <td>推文ID</td>
+                </tr>
+                {% for status in statuses.items %}
+                    <tr>
+                        <td>
+                            <span class="larger label label-default">
+                                {{ status.user.name }}
+                            </span>
+                        </td>
+                        <td>
+                                {{ status.text }}
+                        </td>
+                        <td>
+                                {{ status.created_at }}
+                        </td>
+                        <td>
+                                {{ status.status_id }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <h5 class="table">暂无</h5>
+        {% endif %}
+        {{ pagination(statuses) }}
+    </div>
+{% endblock %}

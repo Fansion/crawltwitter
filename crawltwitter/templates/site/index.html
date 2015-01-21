@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import field_errors, horizontal_field %}
+
+{% block page_title %}主页
+{% endblock %}
+{% block page_id %}page-index
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+    <legend>
+        授权新用户(<a id='valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>)
+    </legend>
+    <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
+       <img title="用Twitter帐号登陆"
+            src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png"/>
+    </a>
+    <p></p>
+    <legend>
+        添加待监测用户(<a id='target-users' href="{{ url_for('site.target_users') }}">所有监测用户</a>)
+    </legend>
+    <a id='twitter-login-icon' href="{{ url_for('site.add_user') }}">
+        <img title="添加待监测用户" style="width: 10%; height: 10%"
+            src="http://www.haotu.net/up/2443/512/add_user.png"/>
+    </a>
+    <p></p>
+    <legend>
+        手动更新数据(<a id='tweets' href="{{ url_for('site.tweets') }}">所有tweet</a>)
+    </legend>
+    <a id='twitter-tweet-icon' href="{{ url_for('site.crawl_user_timeline') }}">
+       <img title="手动更新数据" style="width: 10%; height: 10%"
+            src="http://www.cstor.cn/webedit/uploadfile/20120621111907953.png"/>
+    </a>
+    </div>
+{% endblock %}

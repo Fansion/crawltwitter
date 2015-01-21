@@ -1,3 +1,18 @@
+notes.md
+
+dump.rdb
+celerybeat.pid
+celerybeat-schedule
+
+others/*
+venv/*
+
+crawltwitter/config/default.py
+celery.conf
+celerybeat.conf
+celeryflower.conf
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

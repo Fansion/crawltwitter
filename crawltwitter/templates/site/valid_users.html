@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import pagination, horizontal_field %}
+
+{% block page_title %}所有已授权用户页
+{% endblock %}
+{% block page_id %}page-valid-users
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+        <legend>
+            所有已授权用户
+        </legend>
+        {% if valid_users.items %}
+            <table class="table table-bordered">
+                <tr>
+                    <td>名字</td>
+                    <td>ID</td>
+                    <td>总状态数</td>
+                    <td>粉丝数</td>
+                    <td>关注数</td>
+                    <td>位置</td>
+                    <td>注册时间</td>
+                </tr>
+                {% for user in valid_users.items %}
+                    <tr>
+                        <td>
+                            <span class="larger label label-default">
+                                {{ user.name }}
+                            </span>
+                        </td>
+                        <td>
+                                {{ user.screen_name }}
+                        </td>
+                        <td>
+                                {{ user.statuses_count }}
+                        </td>
+                        <td>
+                                {{ user.followers_count }}
+                        </td>
+                        <td>
+                                {{ user.friends_count }}
+                        </td>
+                        <td>
+                                {{ user.location }}
+                        </td>
+                        <td>
+                                {{ user.created_at }}
+                        </td>
+
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <h5 class="table">暂无</h5>
+        {% endif %}
+        {{ pagination(valid_users) }}
+    </div>
+{% endblock %}

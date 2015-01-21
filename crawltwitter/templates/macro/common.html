@@ -1,0 +1,74 @@
+{% macro pagination(paginator) %}
+   {% if paginator.pages > 1 %}
+      <ul class='pagination pagination-sm'>
+         {% if paginator.has_prev %}
+            <li><a href="{{ url_for_other_page(paginator.prev_num) }}">上一页</a></li>
+         {% endif %}
+
+         {% for page in paginator.iter_pages() %}
+            {% if page %}
+               {% if page != paginator.page %}
+                  <li><a href="{{ url_for_other_page(page) }}">{{ page }}</a></li>
+               {% else %}
+                  <li class="active"><span>{{ page }}</span></li>
+               {% endif %}
+            {% else %}
+               <li class="ellipsis"><span>...</span></li>
+            {% endif %}
+         {% endfor %}
+
+         {% if paginator.has_next %}
+            <li><a href="{{ url_for_other_page(paginator.next_num) }}">下一页</a></li>
+         {% endif %}
+      </ul>
+   {% endif %}
+{% endmacro %}
+
+{% macro field_errors(field) %}
+    {% if field.errors %}
+        <ul class="list-form-errors text-danger list-unstyled">
+            {% for error in field.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% macro horizontal_field(field, length=6, label=True) %}
+    <div class="form-group">
+        {% if label %}
+            {{ field.label(class="col-md-2 control-label") }}
+        {% endif %}
+
+        <div class="col-md-{{ length }}">
+            {{ field(class="form-control", placeholder=field.description, **kwargs) }}
+            {{ field_errors(field) }}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro two_horizontal_field(field1, field2, length1=3, length2=5, label=True) %}
+    <div class="form-group">
+        {% if label %}
+            {{ field1.label(class="col-md-2 control-label") }}
+        {% endif %}
+        <div class="col-md-{{ length1 }}">
+            {{ field1(class="form-control", placeholder=field1.description, **kwargs) }}
+            {{ field_errors(field1) }}
+        </div>
+
+        {% if label %}
+            {{ field2.label(class="col-md-1 control-label") }}
+        {% endif %}
+        <div class="col-md-{{ length2 }}">
+            {{ field2(class="form-control", placeholder=field2.description, **kwargs) }}
+            {{ field_errors(field2) }}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro label_primary(field) %}
+    <span class="label label-primary">
+        {{ field }}
+    </span>
+{% endmacro %}
