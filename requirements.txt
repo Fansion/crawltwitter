@@ -9,3 +9,6 @@ MySQL-python
 redis
 flower
 flask-wtf
+fabric
+gevent
+gunicorn

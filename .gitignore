@@ -11,6 +11,10 @@ crawltwitter/config/default.py
 celery.conf
 celerybeat.conf
 celeryflower.conf
+nginx.conf
+crawltwitter.conf
+
+fabfile.py
 
 
 # Byte-compiled / optimized / DLL files
