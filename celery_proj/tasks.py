@@ -43,15 +43,26 @@ def crawl_user_timeline():
                 #  {"created_at":"Sat Jul 26 15:41:13 +0000 2014",...},
                 #  ...,
                 # ]
-                statuses = api.home_timeline(page=1)
+                # 15min　15次　考虑改变
+                # statuses = api.home_timeline(page=1)
+                statuses = api.user_timeline(
+                    id=accesstoken.user.user_id, page=1)
             else:
                 statuses = []
                 # 'ItemIterator' object does not support indexing
+                #
+                # 15min　15次　考虑改变
+                # items = tweepy.Cursor(
+                # api.home_timeline,
+                # since_id=long(accesstoken.user.since_id)).items()
                 items = tweepy.Cursor(
-                    api.home_timeline, since_id=long(accesstoken.user.since_id)).items()
+                    api.user_timeline, id=accesstoken.user.user_id,
+                    since_id=long(accesstoken.user.since_id)).items()
                 # statuses同样是按照时间由新到旧排列
                 for item in items:
                     statuses.append(item)
+            print str(len(statuses))
+            print accesstoken.user.since_id
             if statuses:
                 # 按照时间从旧往新递增添加状态
                 statuses.reverse()

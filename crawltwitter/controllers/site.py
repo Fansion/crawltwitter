@@ -228,6 +228,7 @@ def add_user():
                             )
                         # 两种情况都需要添加改目标用户
                         # 将该用户添加为待监测用户，从home_timeline中只取目标用户的tweet
+                        flash(accesstoken.user.screen_name + '成功添加新的待监测用户')
                         db.session.add(user)
                     else:
                         flash('没有找到screen_name为' + name + '的人')
