@@ -22,7 +22,7 @@ def twitter_pre_signin():
     auth = tweepy.OAuthHandler(
         current_app.config['CONSUMER_TOKEN'],
         current_app.config['CONSUMER_SECRET'],
-        "http://localhost:5000/twitter_signin"
+        "http://crawller.ifanan.com/twitter_signin"
     )
     try:
         redirect_url = auth.get_authorization_url()
