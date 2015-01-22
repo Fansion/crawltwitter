@@ -11,11 +11,28 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
+class Application(db.Model):
+
+    """twitter application"""
+    __tablename__ = 'applications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    consumer_token = db.Column(db.String(30))
+    consumer_secret = db.Column(db.String(60))
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    is_valid = db.Column(db.Boolean, default=True)
+
+    access_tokens = db.relationship('AccessToken', backref='application',
+                                   lazy='dynamic',
+                                   order_by='desc(AccessToken.created_at)')
+
+
 class User(db.Model):
 
     """用户信息表"""
     __tablename__ = 'users'
 
+    # 其中id用于外键链接，user_id与api交互
     # 针对于mysql数据库
     id = db.Column(mysql.INTEGER(30), primary_key=True)
     # id_str
@@ -28,10 +45,12 @@ class User(db.Model):
     # 关注人员数, following
     friends_count = db.Column(db.Integer)
     created_at = db.Column(db.DateTime)
-    # 待抓取消息id下限
+    # 下次待抓取消息id下限
     since_id = db.Column(db.String(30), default='0')
     # 是否为待监控用户
     is_target = db.Column(db.Boolean, default=False)
+    # 关注者id，表明该待监测用户被monitor_user_id关注
+    monitor_user_id = db.Column(mysql.INTEGER(30))
 
     access_tokens = db.relationship(
         'AccessToken', backref='user', lazy='dynamic', order_by='desc(AccessToken.created_at)')
@@ -54,6 +73,7 @@ class AccessToken(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     user_id = db.Column(mysql.INTEGER(30), db.ForeignKey('users.id'))
+    applcation_id = db.Column(db.Integer, db.ForeignKey('applications.id'))
 
     def __repr__(self):
         return "AccessToken userid %d" % self.user_id
@@ -70,7 +90,10 @@ class Status(db.Model):
     text = db.Column(db.String(150))
     created_at = db.Column(db.DateTime)
 
+    # 被关注者id，表明该tweet是user_id发出的
     user_id = db.Column(mysql.INTEGER(30), db.ForeignKey('users.id'))
+    # 关注者id，表明该tweet是id关注待监测用户之后产生的
+    monitor_user_id = db.Column(mysql.INTEGER(30))
 
     def __repr__(self):
         print "Status %s" % self.status_id

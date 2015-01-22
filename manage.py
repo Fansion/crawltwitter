@@ -19,10 +19,10 @@ def run():
 
 
 @manager.command
-def crawl_user_timeline():
+def crawl_home_timeline():
 
-    from celery_proj.tasks import crawl_user_timeline
-    crawl_user_timeline.delay()
+    from celery_proj.tasks import crawl_home_timeline
+    crawl_home_timeline.delay()
 
 
 if __name__ == '__main__':

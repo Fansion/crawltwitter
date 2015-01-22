@@ -3,13 +3,13 @@
 
 {% block page_title %}添加用户页
 {% endblock %}
-{% block page_id %}page-users
+{% block page_id %}page-add-users
 {% endblock %}
 
 {% block body %}
     {{ super() }}
     <div class="row">
-        <form id="form-add" class="form-horizontal" method="POST" action="{{ url_for('site.add_user') }}">
+        <form id="form-add" class="form-horizontal" method="POST" action="{{ url_for('site.add_users') }}">
             <fieldset>
                 <legend>添加待监测用户</legend>
                 {{ form.csrf_token }}

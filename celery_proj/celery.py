@@ -18,8 +18,8 @@ app = Celery('celery_proj',
 app.conf.update(
     CELERY_TIMEZONE='Asia/Shanghai',
     CELERYBEAT_SCHEDULE={
-        'crawl_user_timeline': {
-            'task': 'celery_proj.tasks.crawl_user_timeline',
+        'crawl_home_timeline': {
+            'task': 'celery_proj.tasks.crawl_home_timeline',
             'schedule': timedelta(minutes=15)
         }
     }

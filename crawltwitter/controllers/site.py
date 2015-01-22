@@ -3,11 +3,13 @@
 __author__ = 'frank'
 
 from flask import Blueprint, render_template, redirect, session, request, url_for, flash, current_app
-
 import tweepy
 
-from ..models import db, AccessToken, User, Status
-from ..forms import UserForm
+from ..models import db, AccessToken, User, Status, Application
+from ..forms import UserForm, ApplicationForm
+from ..decorators import has_valid_application, has_access_token
+
+from datetime import datetime, timedelta
 
 bp = Blueprint('site', __name__)
 
@@ -15,127 +17,89 @@ bp = Blueprint('site', __name__)
 def clear_session():
     session.pop('access_token', None)
     session.pop('access_token_secret', None)
+    session.pop('consumer_token', None)
+    session.pop('consumer_secret', None)
 
 
-@bp.route('/twitter_pre_signin')
-def twitter_pre_signin():
-    auth = tweepy.OAuthHandler(
-        current_app.config['CONSUMER_TOKEN'],
-        current_app.config['CONSUMER_SECRET'],
-        # for pro
-        "http://crawller.ifanan.com/twitter_signin"
-        # for debug
-        # "http://localhost:5000/twitter_signin"
-    )
-    try:
-        redirect_url = auth.get_authorization_url()
-    except tweepy.TweepError:
-        flash('Error! Failed to get request token.')
-        clear_session()
-        return redirect(url_for('site.index'))
-    session['request_token'] = auth.request_token
-    return redirect(redirect_url)
-
-
+@has_valid_application
+@has_access_token
 def save_user_and_token_access():
-    if 'access_token' in session and 'access_token_secret' in session:
-        auth = tweepy.OAuthHandler(
-            current_app.config['CONSUMER_TOKEN'],
-            current_app.config['CONSUMER_SECRET']
-        )
-        auth.set_access_token(session.get('access_token'),
-                              session.get('access_token_secret'))
-        api = tweepy.API(auth)
-        me = api.me()
-        if me:
-            # 判断是否已经保存当前进行授权操作的用户
-            user = User.query.filter_by(user_id=me.id_str).first()
-            if user:
-                accestoken = AccessToken.query.filter_by(
-                    user_id=me.id_str).filter_by(is_valid=True).first()
-                # 如果是否已存在合法access_token（用户可能在主页撤销授权后又重新授权）
-                if accestoken:
-                    if accestoken.access_token != session.get('access_token'):
-                        # 保证某指定id用户只有一个合法的access_token
-                        accestoken.is_valid = False
-                        db.session.add(accestoken)
-                        db.session.commit()
-                        flash('数据表中您的旧access_token已失效')
-                    else:
-                        flash('数据表中已存在您的合法access_token')
-                        return
-            else:
-                user = User(user_id=me.id_str, name=me.name, screen_name=me.screen_name, location=me.location, statuses_count=me.statuses_count,
-                            followers_count=me.followers_count, friends_count=me.friends_count, created_at=me.created_at)
-                db.session.add(user)
-                db.session.commit()
-                flash('数据表成功保存您的twitter账户信息')
-            new_accesstoken = AccessToken(user_id=user.id, access_token=session.get(
-                'access_token'), access_token_secret=session.get('access_token_secret'))
-            db.session.add(new_accesstoken)
-            db.session.commit()
-            flash('数据表成功保存您的新access_token')
-
-        else:
-            flash('调用api.me失败，数据表保存access_token信息失败')
-    else:
-        flash('session中无可用access_token，请重新登陆')
-
-
-def update_status():
-    if 'access_token' in session and 'access_token_secret' in session:
-        auth = tweepy.OAuthHandler(
-            current_app.config['CONSUMER_TOKEN'],
-            current_app.config['CONSUMER_SECRET']
-        )
-        auth.set_access_token(session.get('access_token'),
-                              session.get('access_token_secret'))
-        api = tweepy.API(auth)
-        status = api.update_status('test!')
-        if status:
-            flash('更新状态成功')
-        else:
-            flash('调用api.update_status，更新状态失败')
-    else:
-        flash('session中无可用access_token，请重新登陆')
-
-
-@bp.route('/twitter_signin')
-def twitter_signin():
+    """在用户授权时保存用户和access_token信息"""
+    application = Application.query.filter_by(is_valid=True).first()
     auth = tweepy.OAuthHandler(
-        current_app.config['CONSUMER_TOKEN'],
-        current_app.config['CONSUMER_SECRET']
+        application.consumer_token,
+        application.consumer_secret
     )
-    # request_token用完即删掉
-    request_token = session.pop('request_token', None)
-    auth.request_token = request_token
-    verifier = request.args.get('oauth_verifier')
-    try:
-        auth.get_access_token(verifier)
-    except tweepy.TweepError:
-        flash('Error! Failed to get access token.')
-        clear_session()
-        return redirect(url_for('site.index'))
-    # print auth.access_token, auth.access_token_secret
+    auth.set_access_token(session.get('access_token'),
+                          session.get('access_token_secret'))
+    api = tweepy.API(auth)
+    me = api.me()
+    if me:
+        # 判断是否已经保存当前进行授权操作的用户
+        user = User.query.filter_by(user_id=me.id_str).first()
+        if user:
+            accestoken = AccessToken.query.filter_by(
+                user_id=me.id_str).filter_by(is_valid=True).first()
+            # 如果是否已存在合法access_token（用户可能在主页撤销授权后又重新授权）
+            if accestoken:
+                if accestoken.access_token != session.get('access_token'):
+                    # 保证某指定id用户只有一个合法的access_token
+                    accestoken.is_valid = False
+                    db.session.add(accestoken)
+                    flash('数据表中您的旧access_token已失效')
+                else:
+                    flash('数据表中已存在您的合法access_token')
+                    return
+        else:
+            user = User(user_id=me.id_str, name=me.name, screen_name=me.screen_name,
+                        location=me.location, statuses_count=me.statuses_count,
+                        followers_count=me.followers_count, friends_count=me.friends_count,
+                        created_at=me.created_at
+                        )
+            db.session.add(user)
+            db.session.commit()
+            flash('数据表成功保存您的twitter账户信息')
+        new_accesstoken = AccessToken(user_id=user.id,
+                                      access_token=session.get('access_token'),
+                                      access_token_secret=session.get(
+                                          'access_token_secret'),
+                                      applcation_id=application.id
+                                      )
+        db.session.add(new_accesstoken)
+        db.session.commit()
+        flash('数据表成功保存您的新access_token')
+    else:
+        flash('调用api.me失败，数据表保存access_token信息失败')
 
-    session['access_token'] = auth.access_token
-    session['access_token_secret'] = auth.access_token_secret
 
-    save_user_and_token_access()
-    # update_status()
+@has_valid_application
+@has_access_token
+def update_status():
+    """更新状态，暂时用于调试"""
+    application = Application.query.filter_by(is_valid=True).first()
+    auth = tweepy.OAuthHandler(
+        application.consumer_token,
+        application.consumer_secret
+    )
+    auth.set_access_token(session.get('access_token'),
+                          session.get('access_token_secret'))
+    api = tweepy.API(auth)
+    status = api.update_status('test!')
+    if status:
+        flash('更新状态成功')
+    else:
+        flash('调用api.update_status，更新状态失败')
 
-    flash('登陆并授权成功')
-    return redirect(url_for('site.valid_users'))
 
-
-@bp.route('/crawl_user_timeline')
-def crawl_user_timeline():
-    from celery_proj.tasks import crawl_user_timeline
-    crawl_user_timeline.delay()
-    flash('正在更新数据请稍等，若数据无变化请刷新本页')
-    import time
-    time.sleep(3)
-    return redirect(url_for('site.tweets'))
+@bp.route('/applications')
+def applications():
+    page = request.args.get('page', 1, int)
+    applications = Application.query.filter_by(is_valid=True)
+    applications = applications.paginate(page,
+                                         current_app.config['APPLICATION'],
+                                         error_out=True
+                                         )
+    return render_template('site/applications.html', applications=applications)
 
 
 @bp.route('/valid_users')
@@ -171,11 +135,52 @@ def tweets():
     return render_template('site/statuses.html', statuses=statuses)
 
 
-@bp.route('/add_user', methods=['GET', 'POST'])
-def add_user():
+@bp.route('/add_application', methods=['GET', 'POST'])
+def add_application():
+    page = request.args.get('page', 1, int)
+    form = ApplicationForm()
+    applications = None
+
+    if form.validate_on_submit():
+        consumer_token = form.consumer_token.data.strip()
+        consumer_secret = form.consumer_secret.data.strip()
+        application = Application(
+            consumer_token=consumer_token,
+            consumer_secret=consumer_secret
+        )
+        db.session.add(application)
+        db.session.commit()
+        flash('添加应用成功')
+        return redirect(url_for('site.applications'))
+    return render_template('site/add_application.html', form=form)
+
+
+@bp.route('/add_users', methods=['GET', 'POST'])
+@has_valid_application
+def add_users():
+    """添加待监测用户"""
+    application = Application.query.filter_by(is_valid=True).first()
+    auth = tweepy.OAuthHandler(
+        application.consumer_token,
+        application.consumer_secret
+    )
     # screen_name唯一
     form = UserForm()
     if form.validate_on_submit():
+        # 一个有合法access_token账户添加目标用户
+        accesstokens = AccessToken.query.filter_by(is_valid=True).all()
+        if not accesstokens:
+            flash('数据表中无可用access_token，请用任意账户登陆授权')
+            return redirect(url_for('site.twitter_pre_signin'))
+        # 且考虑用户添加待监测目标上限为1000
+        accesstoken = None
+        for an in accesstokens:
+            if an.user.followers_count < current_app.config['MAX_FOLLOWERS_COUNT']:
+                accesstoken = an
+                break
+        auth.set_access_token(
+            accesstoken.access_token, accesstoken.access_token_secret)
+
         names = [form.screen_name1.data.strip(),
                  form.screen_name2.data.strip(),
                  form.screen_name3.data.strip(),
@@ -183,27 +188,18 @@ def add_user():
                  form.screen_name5.data.strip()
                  ]
         hasName = False
-        hasRepetition = False
-        repeatedNames = ' '
-        # 随便找一个有合法access_token账户添加目标用户，暂不考虑添加上限
-        accesstoken = AccessToken.query.filter_by(is_valid=True).first()
-        if not accesstoken:
-            flash('数据表中无可用access_token，请用任意账户登陆授权')
-            return redirect(url_for('site.twitter_pre_signin'))
         for name in names:
             if name:
-                # 判断是否存在
-                if not User.query.filter_by(screen_name=name).first():
-                    auth = tweepy.OAuthHandler(
-                        current_app.config['CONSUMER_TOKEN'],
-                        current_app.config['CONSUMER_SECRET']
-                    )
-                    auth.set_access_token(accesstoken.access_token,
-                                          accesstoken.access_token_secret
-                                          )
+                user = User.query.filter_by(screen_name=name).first()
+                if not user:
                     api = tweepy.API(auth)
-                    target_user = api.get_user(name)
-                    if target_user:
+                    try:
+                        target_user = api.get_user(name)
+                    except Exception, e:
+                        flash('出错信息： %s' % e)
+                        flash('没有找到screen_name为' + name + '的人')
+                        return redirect(url_for('site.index'))
+                    else:
                         user = User(user_id=target_user.id_str,
                                     name=target_user.name,
                                     screen_name=target_user.screen_name,
@@ -211,43 +207,228 @@ def add_user():
                                     statuses_count=target_user.statuses_count,
                                     followers_count=target_user.followers_count,
                                     friends_count=target_user.friends_count,
-                                    created_at=target_user.created_at, is_target=True
+                                    created_at=target_user.created_at,
+                                    monitor_user_id=accesstoken.user.id,
+                                    is_target=True
                                     )
-                        # print accesstoken.user.friends_count
-                        # 如果当前有合法access_token的用户尚未关注该目标用户
-                        # 此时需考虑其他有合法access_token账户可能已经关注该用户，会造成status重复
-                        # 在Status中需考虑去重
+                        # 有合法access_token的用户尚未关注该目标用户则直接关注
+                        # 不需考虑其他有合法access_token账户可能已经关注该用户，造成status重复
+                        # 因为is_target字段就是判断是否是目标用户进行去重的
                         if not target_user.id in api.friends_ids(accesstoken.user.user_id):
                             api.create_friendship(target_user.id)
-                            # me = api.me()
-                            # print me.friends_count
                         else:
                             flash(
                                 name + '已经被screen_name为' +
                                 accesstoken.user.screen_name + '的人关注'
                             )
-                        # 两种情况都需要添加改目标用户
+                        # 两种情况都需要添加该目标用户
                         # 将该用户添加为待监测用户，从home_timeline中只取目标用户的tweet
                         flash(accesstoken.user.screen_name + '成功添加新的待监测用户')
                         db.session.add(user)
+                else:  # 已经在user表中
+                    if user.monitor_user_id:
+                        monitor_user = User.query.filter_by(
+                            id=user.monitor_user_id).first()
+                        flash(
+                            name + '已经被screen_name为' + monitor_user.screen_name + '的人关注')
                     else:
-                        flash('没有找到screen_name为' + name + '的人')
-                else:
-                    if name not in repeatedNames:
-                        repeatedNames += ' [' + name + '] '
-                    hasRepetition = True
+                        flash(screen_name + '已经在user表中，再添加些新用户吧')
                 hasName = True
         db.session.commit()
-        if hasRepetition:
-            # 清空表单
-            form.screen_name1.data = form.screen_name2.data = form.screen_name3.data = form.screen_name4.data = form.screen_name5.data = ''
-            flash(repeatedNames + '曾被添加过,再添加些新用户吧')
-            return render_template('site/add_user.html', form=form)
         if not hasName:
-            flash(repeatedNames + '至少推荐一些再提交吧')
-            return render_template('site/add_user.html', form=form)
+            flash('至少添加一些再提交吧')
+            return render_template('site/add_users.html', form=form)
         return redirect(url_for('site.target_users'))
-    return render_template('site/add_user.html', form=form)
+    return render_template('site/add_users.html', form=form)
+
+
+@bp.route('/delete_status')
+@has_valid_application
+def delete_status():
+    """删除已发状态"""
+    application = Application.query.filter_by(is_valid=True).first()
+    auth = tweepy.OAuthHandler(
+        application.consumer_token,
+        application.consumer_secret
+    )
+    #　固定设为limianmian
+    auth.set_access_token('2985797091-ylbKaWogQvC93G7REiFeBKWKewaXI3fq1pU3Fgt',
+                          'uDTSvK46yU9eQ1N75GDytytdWV99mBwYHf4o2necK4Q0k')
+    api = tweepy.API(auth)
+
+    status_ids = []
+    # 上限３０００条以内
+    # need to specify include_rts=True as a parameter to api.user_timeline;
+    # retweets are not included by default.
+    items = tweepy.Cursor(
+        api.home_timeline, count=200, page=15,
+        include_rts=True).items()
+    for item in items:
+        status_ids.append(item.id)
+
+    for status_id in status_ids:
+        status = api.destroy_status(status_id)
+        if status:
+            flash('删除状态成功')
+        else:
+            flash('调用api.delete_status，更新状态失败')
+
+    return redirect(url_for('site.index'))
+
+
+@bp.route('/twitter_pre_signin')
+@has_valid_application
+def twitter_pre_signin():
+    """预登陆，跳转到授权页面"""
+    # 暂时只考虑有一个合法的应用
+    # 理论上应该支持多个合法应用，暂时不考虑
+    application = Application.query.filter_by(is_valid=True).first()
+    session['consumer_token'] = application.consumer_token
+    session['consumer_secret'] = application.consumer_secret
+    auth = tweepy.OAuthHandler(
+        session.get('consumer_token'),
+        session.get('consumer_secret'),
+        # for pro
+        # "http://crawller.ifanan.com/twitter_signin"
+        # for debug
+        "http://localhost:5000/twitter_signin"
+    )
+    try:
+        redirect_url = auth.get_authorization_url()
+    except tweepy.TweepError:
+        flash('Error! Failed to get request token, 请重新授权')
+        clear_session()
+        return redirect(url_for('site.index'))
+    session['request_token'] = auth.request_token
+    return redirect(redirect_url)
+
+
+@bp.route('/twitter_signin')
+def twitter_signin():
+    """登陆"""
+    if session.get('consumer_token') and session.get('consumer_secret'):
+        auth = tweepy.OAuthHandler(
+            session.get('consumer_token'),
+            session.get('consumer_secret')
+        )
+        # request_token用完即删掉
+        request_token = session.pop('request_token', None)
+        auth.request_token = request_token
+        verifier = request.args.get('oauth_verifier')
+        try:
+            auth.get_access_token(verifier)
+        except tweepy.TweepError:
+            flash('Error! Failed to get access token, 请重新授权')
+            clear_session()
+            return redirect(url_for('site.index'))
+        # print auth.access_token, auth.access_token_secret
+
+        session['access_token'] = auth.access_token
+        session['access_token_secret'] = auth.access_token_secret
+
+        save_user_and_token_access()
+        # update_status()
+
+        flash('登陆并授权成功')
+        return redirect(url_for('site.valid_users'))
+    else:
+        flash('session中无可用consumer_token和consumer_secret，请先授权新用户')
+        return redirect(url_for('site.index'))
+
+
+@bp.route('/crawl_home_timeline')
+@has_valid_application
+def crawl_home_timeline():
+    """从home_timeline定期抓取消息
+    用于页面辅助手动更新，用于测试　
+    """
+    # from celery_proj.tasks import crawl_home_timeline
+    # crawl_home_timeline.delay()
+
+    # 记录待添监测用户的user_id和id
+    target_users_dict = {}
+    target_users = User.query.filter_by(is_target=True).all()
+    for target_user in target_users:
+        target_users_dict[target_user.user_id] = target_user.id
+
+    # 抓取每一个有合法access_token用户的homeline
+    accesstokens = AccessToken.query.filter_by(is_valid=True).all()
+    for accesstoken in accesstokens:
+        # 根据access_token创建针对具体应用的auth
+        auth = tweepy.OAuthHandler(
+            accesstoken.application.consumer_token,
+            accesstoken.application.consumer_secret
+        )
+        auth.set_access_token(
+            accesstoken.access_token, accesstoken.access_token_secret)
+
+        api = tweepy.API(auth)
+        if accesstoken.user.since_id == '0':
+            # statuses为list，按照时间由新到旧排列，格式如下：
+            # [
+            #  {"created_at":"Tue Jul 29 12:06:40 +0000 2014",...},
+            #  {"created_at":"Sat Jul 26 15:41:13 +0000 2014",...},
+            #  ...,
+            # ]
+            # 第一次抓取since_id为"0"，此时写入最新的20条消息，并存入最新消息的id_str为since_id
+            statuses = api.home_timeline(page=1)
+        else:
+            # ---------------------------------
+            # 考虑可能超出3000条的情况
+            # 此处直接规定count=200,　page=15, 一次性用完15min内的限额
+            # ---------------------------------
+            # 'ItemIterator' object does not support indexing
+            items = tweepy.Cursor(
+                api.home_timeline,
+                since_id=long(accesstoken.user.since_id),
+                # count=200, page=15
+            ).items(3000)
+            statuses = []
+            # statuses同样是按照时间由新到旧排列
+            for item in items:
+                statuses.append(item)
+        flash(str(len(statuses)))
+        flash(accesstoken.user.since_id)
+        if statuses:
+            # 按照时间从旧往新递增添加状态
+            statuses.reverse()
+            me = api.me()
+            # 更新用户的属性值
+            user = User.query.filter_by(user_id=me.id_str).first()
+            user.name = me.name
+            user.screen_name = me.screen_name
+            user.since_id = statuses[-1].id_str
+            user.location = me.location
+            user.statuses_count = me.statuses_count
+            user.followers_count = me.followers_count
+            user.friends_count = me.friends_count
+            db.session.add(user)
+            for i, status in enumerate(statuses):
+                # status.created_at是utc时间
+                # 转为utc+8
+                # str(datetime.strptime(status.created_at, "%Y-%m-%d %H:%M:%S")+timedelta(hours=8))
+                # str(datetime.strptime('2015-01-22 05:51:44', "%Y-%m-%d %H:%M:%S")+timedelta(hours=8))
+                # 只添加目标用户的tweet
+                #         "created_at": "Thu Jan 22 17:20:23 +0000 2015"
+                if status.user.id_str in target_users_dict:
+                    # 此处需要更新待监测目标的属性值，但考虑到api受限，并且必要性不大暂不进行
+                    # -------------------------------------------------------------
+                    ss = Status(status_id=status.id_str,
+                                text=status.text,
+                                created_at=status.created_at,
+                                user_id=target_users_dict[status.user.id_str],
+                                monitor_user_id=accesstoken.user.id
+                                )
+                    db.session.add(ss)
+                else:
+                    # celery中记录中文日志在/var/log/celery/crawltwitter-work.log会乱码
+                    # 目前未解决
+                    print 'user not in target_user list, userid:' + str(status.user.id_str) + '，　status_id:' + str(status.id_str)
+        db.session.commit()
+    flash('正在更新数据请稍等，若数据无变化请刷新本页')
+    import time
+    time.sleep(3)
+    return redirect(url_for('site.tweets'))
 
 
 @bp.route('/')

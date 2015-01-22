@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import horizontal_field %}
+
+{% block page_title %}添加应用页
+{% endblock %}
+{% block page_id %}page-add-application
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+        <form id="form-add" class="form-horizontal" method="POST" action="{{ url_for('site.add_application') }}">
+            <fieldset>
+                <legend>添加应用</legend>
+                {{ form.csrf_token }}
+                {{ horizontal_field(form.consumer_token) }}
+                {{ horizontal_field(form.consumer_secret) }}
+
+                <div class="form-group">
+                    <div class="col-md-3 col-md-offset-2">
+                        <input type="submit" value="提交" class="btn btn-sm btn-primary" />
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+
+    </div>
+{% endblock %}

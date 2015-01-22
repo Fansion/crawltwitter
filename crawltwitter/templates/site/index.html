@@ -10,27 +10,59 @@
     {{ super() }}
     <div class="row">
     <legend>
-        授权新用户(<a id='valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>)
+        操作
     </legend>
-    <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
-       <img title="用Twitter帐号登陆"
-            src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png"/>
-    </a>
-    <p></p>
+    <h3>
+        添加新应用
+        <a id='twitter-add-application' href="{{ url_for('site.add_application') }}">
+            <img title="添加新应用" style="width: 3%; height: 3%"
+                src="http://t2.gstatic.com/images?q=tbn:ANd9GcTu_np4FvrW6HNGSg0gs3XI1DJEiZI3v1oZ6wUdv9cdU0LohBWVHg"/>
+        </a>
+    </h3>
+    <h3>
+        授权新用户
+        <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
+           <img title="用Twitter帐号登陆"
+                src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png"/>
+        </a>
+    </h3>
+    <h3>
+        添加待监测用户
+        <a id='twitter-add-target-user' href="{{ url_for('site.add_users') }}">
+            <img title="添加待监测用户" style="width: 3%; height: 3%"
+                src="http://www.haotu.net/up/2443/512/add_user.png"/>
+        </a>
+    </h3>
+    <h3>
+        手动更新数据
+        <a id='twitter-tweet-icon' href="{{ url_for('site.crawl_home_timeline') }}">
+           <img title="手动更新数据" style="width: 5%; height: 5%"
+                src="http://www.cstor.cn/webedit/uploadfile/20120621111907953.png"/>
+        </a>
+    </h3>
+    <h3>
+        删除已发状态
+        <a id='twitter-delete-tweets' href="{{ url_for('site.delete_status') }}">
+            <img title="删除所有状态" style="width: 8%; height: 8%"
+            src="http://cdn.slashgear.com/wp-content/uploads/2014/11/deletetweet.jpg">
+        </a>
+    </h3>
+    <div style="margin-top: 30px; margin-bottom: 10px;"></div>
     <legend>
-        添加待监测用户(<a id='target-users' href="{{ url_for('site.target_users') }}">所有监测用户</a>)
+        查询
     </legend>
-    <a id='twitter-login-icon' href="{{ url_for('site.add_user') }}">
-        <img title="添加待监测用户" style="width: 10%; height: 10%"
-            src="http://www.haotu.net/up/2443/512/add_user.png"/>
-    </a>
-    <p></p>
-    <legend>
-        手动更新数据(<a id='tweets' href="{{ url_for('site.tweets') }}">所有tweet</a>)
-    </legend>
-    <a id='twitter-tweet-icon' href="{{ url_for('site.crawl_user_timeline') }}">
-       <img title="手动更新数据" style="width: 10%; height: 10%"
-            src="http://www.cstor.cn/webedit/uploadfile/20120621111907953.png"/>
-    </a>
+    <h3>
+        <a id='all-applications' href="{{ url_for('site.applications') }}">所有合法应用</a>
+    </h3>
+    <h3>
+        <a id='all-valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>
+    </h3>
+    <h3>
+        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待监测用户</a>
+    </h3>
+    <h3>
+        <a id='all-tweets' href="{{ url_for('site.tweets') }}">所有tweet</a>
+    </h3>
+
     </div>
 {% endblock %}

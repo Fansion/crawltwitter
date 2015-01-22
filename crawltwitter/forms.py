@@ -3,7 +3,24 @@
 __author__ = 'frank'
 
 from flask.ext.wtf import Form
-from wtforms import StringField, TextField
+from wtforms import StringField, TextField, ValidationError
+from models import Application
+
+
+class ApplicationForm(Form):
+
+    """添加应用信息"""
+
+    consumer_token = StringField('consumer_token', description='准确的consumer_token')
+    consumer_secret = StringField('consumer_secret', description='准确的consumer_secret')
+
+    def validate_consumer_token(self, field):
+        if Application.query.filter_by(consumer_token=field.data).first():
+            raise ValidationError('该token已经被添加过，请更换合法consumer_token')
+
+    def validate_consumer_secret(self, field):
+        if Application.query.filter_by(consumer_secret=field.data).first():
+            raise ValidationError('该secret已经被添加过，请更换合法consumer_secret')
 
 
 class UserForm(Form):
