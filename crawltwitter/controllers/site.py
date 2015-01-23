@@ -270,8 +270,8 @@ def add_users():
     return render_template('site/add_users.html', form=form)
 
 
-@bp.route('/delete_user', methods=['POST'])
-def delete_user():
+@bp.route('/delete_target_user', methods=['POST'])
+def delete_target_user():
     """删除待监测用户
     策略是将该用户is_target设为False，已经抓取的推文不做处理
     但考虑到api.home_timeline抓取上限，同时需要解除关注关系
@@ -289,6 +289,24 @@ def delete_user():
     else:
         flash('删除用户失败')
     return redirect(url_for('site.target_users'))
+
+
+
+@bp.route('/delete_valid_user', methods=['POST'])
+def delete_valid_user():
+    """删除已授权用户
+    """
+    user_id = request.args.get('user_id', '')
+    user = User.query.filter_by(
+        is_valid=True).filter_by(is_target=False).filter_by(user_id=user_id).first()
+    if user:
+        user.is_valid = False
+        db.session.add(user)
+        db.session.commit()
+        flash('取消授权成功')
+    else:
+        flash('取消授权失败')
+    return redirect(url_for('site.valid_users'))
 
 
 @bp.route('/delete_app', methods=['POST'])
