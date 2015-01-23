@@ -32,3 +32,17 @@ def has_valid_application(func):
             return redirect(url_for('site.index'))
         return func(*args, **kargs)
     return decorator
+
+
+def already_has_valid_application(func):
+    """判断是否有合法应用
+    有则跳转回主页，无则继续添加新应用
+    """
+    @wraps(func)
+    def decorator(*args, **kargs):
+        application = Application.query.filter_by(is_valid=True).first()
+        if application:
+            flash('当前系统已有合法应用，不需要继续添加')
+            return redirect(url_for('site.index'))
+        return func(*args, **kargs)
+    return decorator

@@ -7,7 +7,7 @@ import tweepy
 
 from ..models import db, AccessToken, User, Status, Application
 from ..forms import UserForm, ApplicationForm
-from ..decorators import has_valid_application, has_access_token
+from ..decorators import has_valid_application, has_access_token, already_has_valid_application
 
 from datetime import datetime, timedelta
 
@@ -136,6 +136,7 @@ def tweets():
 
 
 @bp.route('/add_application', methods=['GET', 'POST'])
+@already_has_valid_application
 def add_application():
     page = request.args.get('page', 1, int)
     form = ApplicationForm()

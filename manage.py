@@ -5,12 +5,17 @@ __author__ = 'frank'
 from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
 from crawltwitter import app
-from crawltwitter.models import db
+from crawltwitter.models import db, Application, User, AccessToken, Status
 
 manager = Manager(app)
 
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
+
+
+def make_context():
+    return dict(app=app, db=db, Application=Application, User=User, AccessToken=AccessToken, Status=Status)
+manager.add_command('shell', Shell(make_context=make_context))
 
 
 @manager.command
