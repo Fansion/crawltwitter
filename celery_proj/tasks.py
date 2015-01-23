@@ -57,8 +57,10 @@ def crawl_home_timeline():
                 # ---------------------------------
                 # 'ItemIterator' object does not support indexing
                 items = tweepy.Cursor(
-                    api.home_timeline, count=200, page=15,
-                    since_id=long(accesstoken.user.since_id)).items()
+                    api.home_timeline,
+                    since_id=long(accesstoken.user.since_id),
+                    # count=200, page=15
+                ).items(3000)
                 statuses = []
                 # statuses同样是按照时间由新到旧排列
                 for item in items:

@@ -288,10 +288,11 @@ def twitter_pre_signin():
     auth = tweepy.OAuthHandler(
         session.get('consumer_token'),
         session.get('consumer_secret'),
+        current_app.config['CALLBACK_URL']
         # for pro
         # "http://crawller.ifanan.com/twitter_signin"
         # for debug
-        "http://localhost:5000/twitter_signin"
+        # "http://localhost:5000/twitter_signin"
     )
     try:
         redirect_url = auth.get_authorization_url()
@@ -387,8 +388,8 @@ def crawl_home_timeline():
             # statuses同样是按照时间由新到旧排列
             for item in items:
                 statuses.append(item)
-        flash(str(len(statuses)))
-        flash(accesstoken.user.since_id)
+        # flash(str(len(statuses)))
+        # flash(accesstoken.user.since_id)
         if statuses:
             # 按照时间从旧往新递增添加状态
             statuses.reverse()
@@ -430,7 +431,10 @@ def crawl_home_timeline():
     time.sleep(3)
     return redirect(url_for('site.tweets'))
 
-
-@bp.route('/')
+@bp.route('/index')
 def index():
     return render_template('site/index.html')
+
+@bp.route('/')
+def home():
+    return redirect(url_for('site.tweets'))

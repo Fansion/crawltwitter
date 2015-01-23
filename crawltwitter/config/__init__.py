@@ -7,5 +7,10 @@ import os
 
 def load_config():
     """加载配置类"""
-    from .default import Config
-    return Config
+    mode = os.environ.get('MODE')
+    if mode == 'PRODUCTION':
+        from .production import ProductionConfig
+        return ProductionConfig
+    else:
+        from .default import Config
+        return Config
