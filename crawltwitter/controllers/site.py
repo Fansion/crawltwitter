@@ -10,8 +10,23 @@ from ..forms import UserForm, ApplicationForm
 from ..decorators import has_valid_application, has_access_token, already_has_valid_application
 
 from datetime import datetime, timedelta
+from functools import wraps
 
 bp = Blueprint('site', __name__)
+
+
+def has_access_token_in_db(func):
+    """判断数据库中是否有合法access_token
+    有则继续操作，无则提示
+    """
+    @wraps(func)
+    def decorator(*args, **kargs):
+        accesstoken = AccessToken.query.filter_by(is_valid=True).first()
+        if not accesstoken:
+            flash('access_token表中无可用access_token，请重新登陆授权')
+            return redirect(url_for('site.index'))
+        return func(*args, **kargs)
+    return decorator
 
 
 def clear_session():
@@ -44,7 +59,7 @@ def save_user_and_token_access():
         user = User.query.filter_by(user_id=me.id_str).first()
         if user:
             accestoken = AccessToken.query.filter_by(
-                user_id=me.id_str).filter_by(is_valid=True).first()
+                user_id=user.id).filter_by(is_valid=True).first()
             # 如果是否已存在合法access_token（用户可能在主页撤销授权后又重新授权）
             if accestoken:
                 if accestoken.access_token != session.get('access_token'):
@@ -104,6 +119,7 @@ def update_status():
 
 
 @bp.route('/applications')
+@has_valid_application
 def applications():
     page = request.args.get('page', 1, int)
     applications = Application.query.filter_by(is_valid=True)
@@ -115,6 +131,8 @@ def applications():
 
 
 @bp.route('/valid_users')
+@has_access_token_in_db
+@has_valid_application
 def valid_users():
     page = request.args.get('page', 1, int)
     valid_users = User.query.join(AccessToken).filter_by(is_valid=True)
@@ -126,6 +144,8 @@ def valid_users():
 
 
 @bp.route('/target_users')
+@has_access_token_in_db
+@has_valid_application
 def target_users():
     page = request.args.get('page', 1, int)
     target_users = User.query.filter_by(is_target=True)
@@ -294,13 +314,15 @@ def delete_target_user():
 @bp.route('/delete_valid_user', methods=['POST'])
 def delete_valid_user():
     """删除已授权用户
+    accestoken设置is_valid=False
+    不需要直接删除user，因为显示valid_users会联合查询
     """
     user_id = request.args.get('user_id', '')
-    user = User.query.filter_by(
-        is_valid=True).filter_by(is_target=False).filter_by(user_id=user_id).first()
-    if user:
-        user.is_valid = False
-        db.session.add(user)
+    accesstoken = AccessToken.query.join(User).filter(
+        AccessToken.is_valid == True).filter(User.user_id == user_id).first()
+    if accesstoken:
+        accesstoken.is_valid = False
+        db.session.add(accesstoken)
         db.session.commit()
         flash('取消授权成功')
     else:
@@ -311,7 +333,7 @@ def delete_valid_user():
 @bp.route('/delete_app', methods=['POST'])
 def delete_app():
     """删除应用"""
-    app_id = request.args.get('app_id', int, 0)
+    app_id = request.args.get('app_id', 0)
     application = Application.query.filter_by(id=app_id).first()
     if application:
         db.session.delete(application)
@@ -573,7 +595,7 @@ def update_user_info():
         except Exception, e:
             print 'error message: %s' % e
             print 'call api.destroy_friendship error'
-        print 'user_id:' + monitor_user.screen_name + ' call api.destroy_friendship with ' + user.screen_name + ' success'
+        print 'user_id:' + monitor_user.user_id + ' call api.destroy_friendship with ' + user.user_id + ' success'
     return render_template('site/index.html')
 
 
