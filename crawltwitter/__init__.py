@@ -5,6 +5,7 @@ __author__ = 'frank'
 from flask import Flask, request, url_for, render_template, g, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_wtf.csrf import CsrfProtect
+from flask.ext.moment import Moment
 
 from crawltwitter.config import load_config
 
@@ -37,6 +38,10 @@ def register_error_handle(app):
         return render_template('site/500.html'), 500
 
 
+def register_moment(app):
+    moment = Moment(app)
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(config)
@@ -51,6 +56,7 @@ def create_app():
     register_routes(app)
     register_db(app)
     register_error_handle(app)
+    register_moment(app)
 
     return app
 

@@ -19,7 +19,11 @@
     <script src="{{ url_for('static', filename='js/respond.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
+    <script type="text/javascript">
+      {{ moment.include_jquery() }}
+      {{ moment.include_moment() }}
+      {{ moment.lang('zh-cn') }}
+    </script>
 </head>
 <body id="{% block page_id %}{% endblock %}">
 <nav class="navbar navbar-default navbar-static-top" role="navigation">
@@ -38,7 +42,7 @@
         <div class="collapse navbar-collapse my-navbar-collapse">
 
             <ul class="nav navbar-nav navbar-right">
-                      <li><a href="">关于</a></li>
+                      <li><a href="{{ url_for('site.home') }}">Twitter</a></li>
             </ul>
         </div>
     </div>

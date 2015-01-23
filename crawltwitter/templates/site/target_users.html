@@ -46,7 +46,7 @@
                                 {{ user.location }}
                         </td>
                         <td>
-                                {{ user.created_at }}
+                                {{ moment(user.created_at).fromNow(refresh=True) }}
                         </td>
 
                     </tr>

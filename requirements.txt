@@ -12,3 +12,4 @@ flask-wtf
 fabric
 gevent
 gunicorn
+flask-moment

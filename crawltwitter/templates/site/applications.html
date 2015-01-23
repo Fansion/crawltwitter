@@ -40,7 +40,7 @@
                                 {{ application.consumer_secret }}
                         </td>
                         <td>
-                                {{ application.created_at }}
+                                {{ moment(application.created_at).fromNow(refresh=True) }}
                         </td>
                     </tr>
                 {% endfor %}

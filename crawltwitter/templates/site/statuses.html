@@ -29,7 +29,8 @@
                                 {{ status.text }}
                         </td>
                         <td>
-                                {{ status.created_at }}
+
+                                {{ moment(status.created_at).fromNow(refresh=True) }}
                         </td>
                         <td>
                                 {{ status.status_id }}
