@@ -27,6 +27,16 @@ def register_routes(app):
     app.register_blueprint(site.bp, url_prefix='')
 
 
+def register_error_handle(app):
+    @app.errorhandler(404)
+    def page_404(error):
+        return render_template('site/404.html'), 404
+
+    @app.errorhandler(500)
+    def page_500(error):
+        return render_template('site/500.html'), 500
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(config)
@@ -40,6 +50,7 @@ def create_app():
     register_jinja(app)
     register_routes(app)
     register_db(app)
+    register_error_handle(app)
 
     return app
 

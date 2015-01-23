@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block page_title %}404{% endblock %}
+{% block page_id %}page-404-error{% endblock %}
+
+{% block body %}
+
+   <img class="missing img-responsive"  src="{{ url_for('static', filename='imgs/404.png') }}" alt="404" title="404">
+{% endblock %}
