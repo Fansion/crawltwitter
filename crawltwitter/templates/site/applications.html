@@ -30,6 +30,7 @@
                             添加时间
                         </span>
                     </td>
+                    <td></td>
                 </tr>
                 {% for application in applications.items %}
                     <tr>
@@ -41,6 +42,12 @@
                         </td>
                         <td>
                                 {{ moment(application.created_at).fromNow(refresh=True) }}
+                        </td>
+                        <td>
+                             <form method="post" action="{{ url_for('site.delete_app', app_id=application.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input class="btn btn-default" type="submit" name="delete_app" value="删除应用">
+                             </form>
                         </td>
                     </tr>
                 {% endfor %}

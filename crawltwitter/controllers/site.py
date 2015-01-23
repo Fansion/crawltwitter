@@ -291,6 +291,20 @@ def delete_user():
     return redirect(url_for('site.target_users'))
 
 
+@bp.route('/delete_app', methods=['POST'])
+def delete_app():
+    """删除应用"""
+    app_id = request.args.get('app_id', int, 0)
+    application = Application.query.filter_by(id=app_id).first()
+    if application:
+        db.session.delete(application)
+        db.session.commit()
+        flash('删除应用成功')
+    else:
+        flash('删除应用失败')
+    return redirect(url_for('site.index'))
+
+
 @bp.route('/delete_status')
 @has_valid_application
 def delete_status():
