@@ -10,6 +10,9 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+# 时间都存为utcnow，具体显示根据不同的本地环境进行相应转换
+# 如分析数据，或者在本地显示（采用moment插件前端显示）
+
 
 class Application(db.Model):
 
@@ -19,12 +22,12 @@ class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     consumer_token = db.Column(db.String(30))
     consumer_secret = db.Column(db.String(60))
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_valid = db.Column(db.Boolean, default=True)
 
     access_tokens = db.relationship('AccessToken', backref='application',
-                                   lazy='dynamic',
-                                   order_by='desc(AccessToken.created_at)')
+                                    lazy='dynamic',
+                                    order_by='desc(AccessToken.created_at)')
 
 
 class User(db.Model):
@@ -58,7 +61,7 @@ class User(db.Model):
         'Status', backref='user', lazy='dynamic', order_by='desc(Status.created_at)')
 
     def __repr__(self):
-        print 'User %s' % self.screen_name
+        return 'User %s' % self.screen_name
 
 
 class AccessToken(db.Model):
@@ -70,7 +73,7 @@ class AccessToken(db.Model):
     access_token = db.Column(db.String(50))
     access_token_secret = db.Column(db.String(45))
     is_valid = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(mysql.INTEGER(30), db.ForeignKey('users.id'))
     applcation_id = db.Column(db.Integer, db.ForeignKey('applications.id'))
