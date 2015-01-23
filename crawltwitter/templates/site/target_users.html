@@ -22,6 +22,7 @@
                     <td>关注数</td>
                     <td>位置</td>
                     <td>注册时间</td>
+                    <td></td>
                 </tr>
                 {% for user in target_users.items %}
                     <tr>
@@ -48,7 +49,12 @@
                         <td>
                                 {{ moment(user.created_at).fromNow(refresh=True) }}
                         </td>
-
+                        <td>
+                             <form method="post" action="{{ url_for('site.delete_user', user_id=user.user_id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input class="btn btn-default" type="submit" name="delete_user" value="删除">
+                             </form>
+                        </td>
                     </tr>
                 {% endfor %}
             </table>

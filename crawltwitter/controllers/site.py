@@ -33,7 +33,12 @@ def save_user_and_token_access():
     auth.set_access_token(session.get('access_token'),
                           session.get('access_token_secret'))
     api = tweepy.API(auth)
-    me = api.me()
+    try:
+        me = api.me()
+    except Exception, e:
+        flash('出错信息： %s' % e)
+        flash('调用api.me次数超出规定上限，请15min后重试')
+        return redirect(url_for('site.index'))
     if me:
         # 判断是否已经保存当前进行授权操作的用户
         user = User.query.filter_by(user_id=me.id_str).first()
@@ -69,11 +74,11 @@ def save_user_and_token_access():
         db.session.commit()
         flash('数据表成功保存您的新access_token')
     else:
-        flash('调用api.me失败，数据表保存access_token信息失败')
+        flash('调用api.me，数据表保存access_token信息失败')
 
 
+@bp.route('update_status')
 @has_valid_application
-@has_access_token
 def update_status():
     """更新状态，暂时用于调试"""
     application = Application.query.filter_by(is_valid=True).first()
@@ -81,14 +86,21 @@ def update_status():
         application.consumer_token,
         application.consumer_secret
     )
-    auth.set_access_token(session.get('access_token'),
-                          session.get('access_token_secret'))
+    #　固定设为limianmian
+    auth.set_access_token('2985797091-ylbKaWogQvC93G7REiFeBKWKewaXI3fq1pU3Fgt',
+                          'uDTSvK46yU9eQ1N75GDytytdWV99mBwYHf4o2necK4Q0k')
     api = tweepy.API(auth)
-    status = api.update_status('test!')
+    try:
+        status = api.update_status('test!')
+    except Exception, e:
+        flash('出错信息： %s' % e)
+        flash('调用api.home_timeline次数超出规定上限，请15min后重试')
+        return redirect(url_for('site.index'))
     if status:
         flash('更新状态成功')
     else:
         flash('调用api.update_status，更新状态失败')
+    return redirect(url_for('site.index'))
 
 
 @bp.route('/applications')
@@ -179,6 +191,10 @@ def add_users():
             if an.user.followers_count < current_app.config['MAX_FOLLOWERS_COUNT']:
                 accesstoken = an
                 break
+        if not accesstoken:
+            flash('所有用户各自添加待监测用户数超过上限，请用任意新账户登陆授权')
+            return redirect(url_for('site.twitter_pre_signin'))
+
         auth.set_access_token(
             accesstoken.access_token, accesstoken.access_token_secret)
 
@@ -198,7 +214,7 @@ def add_users():
                         target_user = api.get_user(name)
                     except Exception, e:
                         flash('出错信息： %s' % e)
-                        flash('没有找到screen_name为' + name + '的人')
+                        flash('调用api.get_user，没有找到screen_name为' + name + '的人')
                         return redirect(url_for('site.index'))
                     else:
                         user = User(user_id=target_user.id_str,
@@ -228,10 +244,16 @@ def add_users():
                         db.session.add(user)
                 else:  # 已经在user表中
                     if user.monitor_user_id:
-                        monitor_user = User.query.filter_by(
-                            id=user.monitor_user_id).first()
-                        flash(
-                            name + '已经被screen_name为' + monitor_user.screen_name + '的人关注')
+                        # 删除时将该字段设为false，此时需检查该字段
+                        if user.is_target:
+                            monitor_user = User.query.filter_by(
+                                id=user.monitor_user_id).first()
+                            flash(
+                                name + '已经被screen_name为' + monitor_user.screen_name + '的人关注')
+                        else:
+                            user.is_target = True
+                            db.session.add(user)
+                            flash(name + '已经在user表中，原来被删除，现在重新激活该用户')
                     else:
                         flash(screen_name + '已经在user表中，再添加些新用户吧')
                 hasName = True
@@ -241,6 +263,24 @@ def add_users():
             return render_template('site/add_users.html', form=form)
         return redirect(url_for('site.target_users'))
     return render_template('site/add_users.html', form=form)
+
+
+@bp.route('/delete_user', methods=['POST'])
+def delete_user():
+    """删除待监测用户
+    策略是将该用户is_target设为False，已经抓取的推文不做处理
+    """
+    user_id = request.args.get('user_id', '')
+    user = User.query.filter_by(
+        is_target=True).filter_by(user_id=user_id).first()
+    if user:
+        flash('screen_name为' + user.screen_name + '的用户被成功删除，仍保留已抓取的与其相关的推文')
+        user.is_target = False
+        db.session.add(user)
+        db.session.commit()
+    else:
+        flash('删除用户失败')
+    return redirect(url_for('site.target_users'))
 
 
 @bp.route('/delete_status')
@@ -261,9 +301,15 @@ def delete_status():
     # 上限３０００条以内
     # need to specify include_rts=True as a parameter to api.user_timeline;
     # retweets are not included by default.
-    items = tweepy.Cursor(
-        api.home_timeline, count=200, page=15,
-        include_rts=True).items()
+    try:
+        items = tweepy.Cursor(
+            api.home_timeline,
+            include_rts=True).items(3000)
+    except Exception, e:
+        flash('出错信息： %s' % e)
+        flash('调用api.home_timeline次数超出规定上限，请15min后重试')
+        return redirect(url_for('site.index'))
+
     for item in items:
         status_ids.append(item.id)
 
@@ -323,8 +369,6 @@ def twitter_signin():
             flash('Error! Failed to get access token, 请重新授权')
             clear_session()
             return redirect(url_for('site.index'))
-        # print auth.access_token, auth.access_token_secret
-
         session['access_token'] = auth.access_token
         session['access_token_secret'] = auth.access_token_secret
 
@@ -342,7 +386,7 @@ def twitter_signin():
 @has_valid_application
 def crawl_home_timeline():
     """从home_timeline定期抓取消息
-    用于页面辅助手动更新，用于测试　
+    用于页面辅助手动更新，用于调试　
     """
     # from celery_proj.tasks import crawl_home_timeline
     # crawl_home_timeline.delay()
@@ -365,30 +409,36 @@ def crawl_home_timeline():
             accesstoken.access_token, accesstoken.access_token_secret)
 
         api = tweepy.API(auth)
-        if accesstoken.user.since_id == '0':
-            # statuses为list，按照时间由新到旧排列，格式如下：
-            # [
-            #  {"created_at":"Tue Jul 29 12:06:40 +0000 2014",...},
-            #  {"created_at":"Sat Jul 26 15:41:13 +0000 2014",...},
-            #  ...,
-            # ]
-            # 第一次抓取since_id为"0"，此时写入最新的20条消息，并存入最新消息的id_str为since_id
-            statuses = api.home_timeline(page=1)
-        else:
-            # ---------------------------------
-            # 考虑可能超出3000条的情况
-            # 此处直接规定count=200,　page=15, 一次性用完15min内的限额
-            # ---------------------------------
-            # 'ItemIterator' object does not support indexing
-            items = tweepy.Cursor(
-                api.home_timeline,
-                since_id=long(accesstoken.user.since_id),
-                # count=200, page=15
-            ).items(3000)
-            statuses = []
-            # statuses同样是按照时间由新到旧排列
-            for item in items:
-                statuses.append(item)
+
+        try:
+            if accesstoken.user.since_id == '0':
+                # statuses为list，按照时间由新到旧排列，格式如下：
+                # [
+                #  {"created_at":"Tue Jul 29 12:06:40 +0000 2014",...},
+                #  {"created_at":"Sat Jul 26 15:41:13 +0000 2014",...},
+                #  ...,
+                # ]
+                # 第一次抓取since_id为"0"，此时写入最新的20条消息，并存入最新消息的id_str为since_id
+                statuses = api.home_timeline(page=1)
+            else:
+                # ---------------------------------
+                # 考虑可能超出3000条的情况
+                # 此处直接规定count=200,　page=15, 一次性用完15min内的限额
+                # ---------------------------------
+                # 'ItemIterator' object does not support indexing
+                items = tweepy.Cursor(
+                    api.home_timeline,
+                    since_id=long(accesstoken.user.since_id),
+                    # count=200, page=15
+                ).items(3000)
+                statuses = []
+                # statuses同样是按照时间由新到旧排列
+                for item in items:
+                    statuses.append(item)
+        except Exception, e:
+            flash('出错信息： %s' % e)
+            flash('调用api.home_timeline次数超出规定上限，请15min后重试')
+            return redirect(url_for('site.index'))
         # flash(str(len(statuses)))
         # flash(accesstoken.user.since_id)
         if statuses:
@@ -432,9 +482,11 @@ def crawl_home_timeline():
     time.sleep(3)
     return redirect(url_for('site.tweets'))
 
+
 @bp.route('/index')
 def index():
     return render_template('site/index.html')
+
 
 @bp.route('/')
 def home():
