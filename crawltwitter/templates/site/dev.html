@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% from "macro/common.html" import field_errors, horizontal_field %}
+
+{% block page_title %}主页
+{% endblock %}
+{% block page_id %}page-index
+{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+    <legend>
+        操作
+    </legend>
+    <h3>
+        添加新应用
+        <a id='twitter-add-application' href="{{ url_for('site.add_application') }}">
+            <img title="添加新应用" style="width: 3%; height: 3%"
+                src="{{ url_for('static', filename='imgs/twitter-add-application.jpg') }}"/>
+        </a>
+    </h3>
+    <h3>
+        授权新用户
+        <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
+           <img title="用Twitter帐号登陆"
+           src="{{ url_for('static', filename='imgs/twitter-login-icon.png') }}"/>
+        </a>
+    </h3>
+    <h3>
+        添加待监测用户
+        <a id='twitter-add-target-user' href="{{ url_for('site.add_users') }}">
+            <img title="添加待监测用户" style="width: 3%; height: 3%"
+                src="http://www.haotu.net/up/2443/512/add_user.png"/>
+        </a>
+    </h3>
+    <h3>
+        更新推文数据
+        <a id='twitter-tweet-icon' href="{{ url_for('site.crawl_home_timeline') }}">
+           <img title="手动更新数据" style="width: 5%; height: 5%"
+                src="http://www.cstor.cn/webedit/uploadfile/20120621111907953.png"/>
+        </a>
+    </h3>
+    <h3>
+        更新用户信息
+        <a id='twitter-update-tweets' href="{{ url_for('site.crawl_home_timeline') }}">
+           <img title="手动更新数据" style="width: 7%; height: 7%"
+                src="{{ url_for('static', filename='imgs/update-tweets.jpeg') }}"/>
+        </a>
+    </h3>
+    <h3>
+        用limianmian账号发推
+        <a id='twitter-add-tweet' href="{{ url_for('site.update_status') }}">
+           <img title="发推文" style="width: 7%; height: 7%"
+                src="{{ url_for('static', filename='imgs/add-tweet.jpg') }}"/>
+        </a>
+    </h3>
+    <h3>
+        删除limianmian所有已发推文
+        <a id='twitter-delete-tweets' href="{{ url_for('site.delete_status') }}">
+            <img title="删除所有状态" style="width: 8%; height: 8%"
+            src="{{ url_for('static', filename='imgs/delete-tweets.png') }}">
+        </a>
+    </h3>
+    <div style="margin-top: 30px; margin-bottom: 10px;"></div>
+    <legend>
+        查询
+    </legend>
+    <h3>
+        <a id='all-applications' href="{{ url_for('site.applications') }}">所有合法应用</a>
+    </h3>
+    <h3>
+        <a id='all-valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>
+    </h3>
+    <h3>
+        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待监测用户</a>
+    </h3>
+{#     <h3>
+        <a id='all-tweets' href="{{ url_for('site.tweets') }}">所有tweet</a>
+    </h3> #}
+
+    </div>
+{% endblock %}

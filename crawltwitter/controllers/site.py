@@ -291,7 +291,6 @@ def delete_target_user():
     return redirect(url_for('site.target_users'))
 
 
-
 @bp.route('/delete_valid_user', methods=['POST'])
 def delete_valid_user():
     """删除已授权用户
@@ -576,6 +575,11 @@ def update_user_info():
             print 'call api.destroy_friendship error'
         print 'user_id:' + monitor_user.screen_name + ' call api.destroy_friendship with ' + user.screen_name + ' success'
     return render_template('site/index.html')
+
+
+@bp.route('/dev')
+def dev():
+    return render_template('site/dev.html')
 
 
 @bp.route('/index')
