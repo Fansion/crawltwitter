@@ -19,11 +19,9 @@
     <script src="{{ url_for('static', filename='js/respond.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    <script type="text/javascript">
-      {{ moment.include_jquery() }}
-      {{ moment.include_moment() }}
-      {{ moment.lang('zh-cn') }}
-    </script>
+    {{ moment.include_jquery() }}
+    {{ moment.include_moment() }}
+    {{ moment.lang('zh-cn') }}
 </head>
 <body id="{% block page_id %}{% endblock %}">
 <nav class="navbar navbar-default navbar-static-top" role="navigation">

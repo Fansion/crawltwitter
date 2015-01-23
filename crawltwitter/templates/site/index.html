@@ -16,14 +16,14 @@
         添加新应用
         <a id='twitter-add-application' href="{{ url_for('site.add_application') }}">
             <img title="添加新应用" style="width: 3%; height: 3%"
-                src="http://t2.gstatic.com/images?q=tbn:ANd9GcTu_np4FvrW6HNGSg0gs3XI1DJEiZI3v1oZ6wUdv9cdU0LohBWVHg"/>
+                src="{{ url_for('static', filename='imgs/twitter-add-application.jpg') }}"/>
         </a>
     </h3>
     <h3>
         授权新用户
         <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
            <img title="用Twitter帐号登陆"
-                src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png"/>
+           src="{{ url_for('static', filename='imgs/twitter-login-icon.png') }}"/>
         </a>
     </h3>
     <h3>
