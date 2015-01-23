@@ -24,7 +24,7 @@ def clear_session():
 @has_valid_application
 @has_access_token
 def save_user_and_token_access():
-    """在用户授权时保存用户和access_token信息"""
+    """在用户授权时更新用户和access_token信息"""
     application = Application.query.filter_by(is_valid=True).first()
     auth = tweepy.OAuthHandler(
         application.consumer_token,
@@ -197,6 +197,7 @@ def add_users():
 
         auth.set_access_token(
             accesstoken.access_token, accesstoken.access_token_secret)
+        api = tweepy.API(auth)
 
         names = [form.screen_name1.data.strip(),
                  form.screen_name2.data.strip(),
@@ -209,7 +210,6 @@ def add_users():
             if name:
                 user = User.query.filter_by(screen_name=name).first()
                 if not user:
-                    api = tweepy.API(auth)
                     try:
                         target_user = api.get_user(name)
                     except Exception, e:
@@ -251,9 +251,14 @@ def add_users():
                             flash(
                                 name + '已经被screen_name为' + monitor_user.screen_name + '的人关注')
                         else:
+                            # 重新添加已删除用户为待监测用户
+                            # 改变is_target，并且需关注
                             user.is_target = True
                             db.session.add(user)
-                            flash(name + '已经在user表中，原来被删除，现在重新激活该用户')
+                            flash(name + '已经在user表中，原来被删除现在重新激活该用户')
+                            api.create_friendship(user.user_id)
+                            flash(
+                                accesstoken.user.screen_name + '重新关注' + user.screen_name)
                     else:
                         flash(screen_name + '已经在user表中，再添加些新用户吧')
                 hasName = True
@@ -269,15 +274,18 @@ def add_users():
 def delete_user():
     """删除待监测用户
     策略是将该用户is_target设为False，已经抓取的推文不做处理
+    但考虑到api.home_timeline抓取上限，同时需要解除关注关系
     """
     user_id = request.args.get('user_id', '')
     user = User.query.filter_by(
         is_target=True).filter_by(user_id=user_id).first()
     if user:
-        flash('screen_name为' + user.screen_name + '的用户被成功删除，仍保留已抓取的与其相关的推文')
         user.is_target = False
         db.session.add(user)
         db.session.commit()
+        # 此处只改变is_target，取消关注在定时任务里做
+        flash('screen_name为' + user.screen_name +
+              '的用户被成功删除，取消关注但仍保留已抓取的与其相关的推文')
     else:
         flash('删除用户失败')
     return redirect(url_for('site.target_users'))
@@ -480,6 +488,62 @@ def crawl_home_timeline():
     import time
     time.sleep(2)
     return redirect(url_for('site.tweets'))
+
+
+@bp.route('/update_user_info')
+def update_user_info():
+    # 更新用户属性信息
+    users = User.query.all()
+    accesstokens = AccessToken.query.filter_by(is_valid=True).all()
+    # 利用每一个有合法access_token的用户
+    for accesstoken in accesstokens:
+        # 根据access_token创建针对具体应用的auth
+        auth = tweepy.OAuthHandler(
+            accesstoken.application.consumer_token,
+            accesstoken.application.consumer_secret
+        )
+        auth.set_access_token(
+            accesstoken.access_token, accesstoken.access_token_secret)
+
+        api = tweepy.API(auth)
+        for user in users:
+            try:
+                new_user = api.get_user(user.screen_name)
+                user.name = new_user.name,
+                user.screen_name = new_user.screen_name,
+                user.location = new_user.location,
+                user.statuses_count = new_user.statuses_count,
+                user.followers_count = new_user.followers_count,
+                user.friends_count = new_user.friends_count,
+                db.session.add(user)
+            except Exception, e:
+                print 'error message: %s' % e
+                print accesstoken.user.screen_name + ' access_token exceeds limit'
+                break
+            print 'update_user_info success, user_id:' + user.user_id
+    # 取消已被取消监测但尚未被用户取消关注的用户
+    users = User.query.filter(
+        User.monitor_user_id != None).filter_by(is_target=0).all()
+    for user in users:
+        monitor_user = User.query.filter_by(
+            id=user.monitor_user_id).first()
+        # 获取跟monitor_user相关的access_token，根据这个access_token来取消关注
+        accesstoken = AccessToken.query.join(User).filter(
+            AccessToken.is_valid == True).filter(User.id == monitor_user.id).first()
+        auth = tweepy.OAuthHandler(
+            accesstoken.application.consumer_token,
+            accesstoken.application.consumer_secret
+        )
+        auth.set_access_token(
+            accesstoken.access_token, accesstoken.access_token_secret)
+        api = tweepy.API(auth)
+        try:
+            api.destroy_friendship(user.user_id)
+        except Exception, e:
+            print 'error message: %s' % e
+            print 'call api.destroy_friendship error'
+        print 'user_id:' + monitor_user.screen_name + ' call api.destroy_friendship with ' + user.screen_name + ' success'
+    return render_template('site/index.html')
 
 
 @bp.route('/index')

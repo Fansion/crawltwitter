@@ -52,7 +52,7 @@
                         <td>
                              <form method="post" action="{{ url_for('site.delete_user', user_id=user.user_id) }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <input class="btn btn-default" type="submit" name="delete_user" value="删除">
+                                <input class="btn btn-default" type="submit" name="delete_user" value="取消监测">
                              </form>
                         </td>
                     </tr>

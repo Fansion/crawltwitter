@@ -34,19 +34,33 @@
         </a>
     </h3>
     <h3>
-        手动更新数据
+        更新推文数据
         <a id='twitter-tweet-icon' href="{{ url_for('site.crawl_home_timeline') }}">
            <img title="手动更新数据" style="width: 5%; height: 5%"
                 src="http://www.cstor.cn/webedit/uploadfile/20120621111907953.png"/>
         </a>
     </h3>
-{#     <h3>
-        删除已发状态
+    <h3>
+        更新用户信息
+        <a id='twitter-update-tweets' href="{{ url_for('site.crawl_home_timeline') }}">
+           <img title="手动更新数据" style="width: 7%; height: 7%"
+                src="{{ url_for('static', filename='imgs/update-tweets.jpeg') }}"/>
+        </a>
+    </h3>
+    <h3>
+        用limianmian账号发推
+        <a id='twitter-add-tweet' href="{{ url_for('site.update_status') }}">
+           <img title="发推文" style="width: 7%; height: 7%"
+                src="{{ url_for('static', filename='imgs/add-tweet.jpg') }}"/>
+        </a>
+    </h3>
+    <h3>
+        删除limianmian所有已发推文
         <a id='twitter-delete-tweets' href="{{ url_for('site.delete_status') }}">
             <img title="删除所有状态" style="width: 8%; height: 8%"
-            src="http://cdn.slashgear.com/wp-content/uploads/2014/11/deletetweet.jpg">
+            src="{{ url_for('static', filename='imgs/delete-tweets.png') }}">
         </a>
-    </h3> #}
+    </h3>
     <div style="margin-top: 30px; margin-bottom: 10px;"></div>
     <legend>
         查询

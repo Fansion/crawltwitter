@@ -18,6 +18,67 @@ config = load_config()
 
 
 @app.task
+def update_user_info():
+    """更新用户信息
+    取消已被取消监测但尚未被用户取消关注的用户
+    抓取消息每15min执行一次，更新信息每14min执行一次
+    """
+    flask_app = create_app()
+    with flask_app.app_context():
+        # 更新用户属性
+        users = User.query.all()
+        accesstokens = AccessToken.query.filter_by(is_valid=True).all()
+        # 利用每一个有合法access_token的用户
+        for accesstoken in accesstokens:
+            # 根据access_token创建针对具体应用的auth
+            auth = tweepy.OAuthHandler(
+                accesstoken.application.consumer_token,
+                accesstoken.application.consumer_secret
+            )
+            auth.set_access_token(
+                accesstoken.access_token, accesstoken.access_token_secret)
+
+            api = tweepy.API(auth)
+            for user in users:
+                try:
+                    new_user = api.get_user(user.screen_name)
+                    user.name = new_user.name,
+                    user.screen_name = new_user.screen_name,
+                    user.location = new_user.location,
+                    user.statuses_count = new_user.statuses_count,
+                    user.followers_count = new_user.followers_count,
+                    user.friends_count = new_user.friends_count,
+                    db.session.add(user)
+                except Exception, e:
+                    print 'error message: %s' % e
+                    print accesstoken.user.screen_name + ' access_token exceeds limit'
+                    break
+                print 'update_user_info success, user_id:' + user.user_id
+        # 取消已被取消监测但尚未被用户取消关注的用户
+        users = User.query.filter(
+            User.monitor_user_id != None).filter_by(is_target=0).all()
+        for user in users:
+            monitor_user = User.query.filter_by(
+                id=user.monitor_user_id).first()
+            # 获取跟monitor_user相关的access_token，根据这个access_token来取消关注
+            accesstoken = AccessToken.query.join(User).filter(
+                AccessToken.is_valid == True).filter(User.id == monitor_user.id).first()
+            auth = tweepy.OAuthHandler(
+                accesstoken.application.consumer_token,
+                accesstoken.application.consumer_secret
+            )
+            auth.set_access_token(
+                accesstoken.access_token, accesstoken.access_token_secret)
+            api = tweepy.API(auth)
+            try:
+                api.destroy_friendship(user.user_id)
+            except Exception, e:
+                print 'error message: %s' % e
+                print 'call api.destroy_friendship error'
+            print 'user_id:' + monitor_user.screen_name + ' call api.destroy_friendship with ' + user.screen_name + ' success'
+
+
+@app.task
 def crawl_home_timeline():
     """从home_timeline定期抓取消息"""
     flask_app = create_app()
@@ -67,11 +128,11 @@ def crawl_home_timeline():
                     for item in items:
                         statuses.append(item)
             except Exception, e:
-                flash('出错信息： %s' % e)
-                flash('调用api.home_timeline次数超出规定上限，请15min后重试')
-                return redirect(url_for('site.index'))
-            # flash(str(len(statuses)))
-            # flash(accesstoken.user.since_id)
+                print 'error message: %s' % e
+                print 'api.home_timeline access_token exceeds limit, retry 15min later'
+                return
+            # print str(len(statuses)))
+            # print accesstoken.user.since_id)
             if statuses:
                 # 按照时间从旧往新递增添加状态
                 statuses.reverse()
@@ -99,7 +160,8 @@ def crawl_home_timeline():
                         ss = Status(status_id=status.id_str,
                                     text=status.text,
                                     created_at=status.created_at,
-                                    user_id=target_users_dict[status.user.id_str],
+                                    user_id=target_users_dict[
+                                        status.user.id_str],
                                     monitor_user_id=accesstoken.user.id
                                     )
                         db.session.add(ss)
