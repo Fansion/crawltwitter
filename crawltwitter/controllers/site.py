@@ -77,7 +77,7 @@ def save_user_and_token_access():
         flash('调用api.me，数据表保存access_token信息失败')
 
 
-@bp.route('update_status')
+@bp.route('/update_status')
 @has_valid_application
 def update_status():
     """更新状态，暂时用于调试"""
@@ -302,9 +302,8 @@ def delete_status():
     # need to specify include_rts=True as a parameter to api.user_timeline;
     # retweets are not included by default.
     try:
-        items = tweepy.Cursor(
-            api.home_timeline,
-            include_rts=True).items(3000)
+        items = tweepy.Cursor(api.home_timeline, include_rts=True
+                              ).items(current_app.config['API_USER_HOME_TIMELINE_MAXIMUM'])
     except Exception, e:
         flash('出错信息： %s' % e)
         flash('调用api.home_timeline次数超出规定上限，请15min后重试')
@@ -430,7 +429,7 @@ def crawl_home_timeline():
                     api.home_timeline,
                     since_id=long(accesstoken.user.since_id),
                     # count=200, page=15
-                ).items(3000)
+                ).items(current_app.config['API_USER_HOME_TIMELINE_MAXIMUM'])
                 statuses = []
                 # statuses同样是按照时间由新到旧排列
                 for item in items:
@@ -479,7 +478,7 @@ def crawl_home_timeline():
         db.session.commit()
     flash('正在更新数据请稍等，若数据无变化请刷新本页')
     import time
-    time.sleep(3)
+    time.sleep(2)
     return redirect(url_for('site.tweets'))
 
 
