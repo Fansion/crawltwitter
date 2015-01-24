@@ -136,7 +136,8 @@ def applications():
 @has_valid_application
 def valid_users():
     page = request.args.get('page', 1, int)
-    valid_users = User.query.join(AccessToken).filter_by(is_valid=True)
+    valid_users = User.query.join(AccessToken).filter_by(
+        is_valid=True).order_by(User.id.desc())
     valid_users = valid_users.paginate(page,
                                        current_app.config['USER_PER_PAGE'],
                                        error_out=True
@@ -149,7 +150,8 @@ def valid_users():
 @has_valid_application
 def target_users():
     page = request.args.get('page', 1, int)
-    target_users = User.query.filter_by(is_target=True)
+    target_users = User.query.filter_by(
+        is_target=True).order_by(User.id.desc())
     target_users = target_users.paginate(page,
                                          current_app.config['USER_PER_PAGE'],
                                          error_out=True
@@ -160,7 +162,9 @@ def target_users():
 @bp.route('/tweets')
 def tweets():
     page = request.args.get('page', 1, int)
-    statuses = Status.query.order_by(Status.created_at.desc())
+    # 只显示待同步用户的推文
+    statuses = Status.query.join(User).filter(
+        User.is_target == True).order_by(Status.created_at.desc())
     statuses = statuses.paginate(page,
                                  current_app.config['STATUS_PER_PAGE'],
                                  error_out=True
