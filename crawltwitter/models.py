@@ -56,7 +56,7 @@ class User(db.Model):
     monitor_user_id = db.Column(mysql.INTEGER(30))
     # 图像地址
     profile_image_url = db.Column(db.String(150))
-    # url
+    # url 主页地址
     url = db.Column(db.String(150))
 
     access_tokens = db.relationship(

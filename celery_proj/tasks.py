@@ -57,6 +57,7 @@ def update_user_info():
                     print accesstoken.user.screen_name + ' access_token exceeds limit'
                     break
                 print 'update_user_info success, user_id:' + user.user_id
+            db.session.commit()
         # 取消已被取消同步但尚未被用户取消关注的用户
         users = User.query.filter(
             User.monitor_user_id != None).filter_by(is_target=0).all()

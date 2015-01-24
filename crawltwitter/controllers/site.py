@@ -597,18 +597,20 @@ def update_user_info():
         for user in users:
             try:
                 new_user = api.get_user(user.screen_name)
-                user.name = new_user.name,
-                user.screen_name = new_user.screen_name,
-                user.location = new_user.location,
-                user.statuses_count = new_user.statuses_count,
-                user.followers_count = new_user.followers_count,
-                user.friends_count = new_user.friends_count,
+                user.name = new_user.name
+                user.screen_name = new_user.screen_name
+                user.location = new_user.location
+                user.statuses_count = new_user.statuses_count
+                user.followers_count = new_user.followers_count
+                user.friends_count = new_user.friends_count
+                user.profile_image_url = new_user.profile_image_url
                 db.session.add(user)
             except Exception, e:
                 print 'error message: %s' % e
                 print accesstoken.user.screen_name + ' access_token exceeds limit'
                 break
             print 'update_user_info success, user_id:' + user.user_id
+        db.session.commit()
     # 取消已被取消同步但尚未被用户取消关注的用户
     users = User.query.filter(
         User.monitor_user_id != None).filter_by(is_target=0).all()
