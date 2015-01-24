@@ -25,7 +25,7 @@ class ApplicationForm(Form):
 
 class UserForm(Form):
 
-    """添加待监测用户"""
+    """添加待同步用户"""
 
     screen_name1 = TextField('ID1', description='准确的twitter screen_name')
     screen_name2 = TextField('ID2', description='准确的twitter screen_name')

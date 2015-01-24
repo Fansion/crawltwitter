@@ -18,8 +18,6 @@
             <img title="添加新应用" style="width: 3%; height: 3%"
                 src="{{ url_for('static', filename='imgs/twitter-add-application.jpg') }}"/>
         </a>
-        &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;
-        <a id='all-applications' href="{{ url_for('site.applications') }}">所有合法应用</a>
     </h3>
     <h3>
         授权新用户
@@ -31,14 +29,13 @@
         <a id='all-valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>
     </h3>
     <h3>
-        添加待监测用户
+        添加待同步用户
         <a id='twitter-add-target-user' href="{{ url_for('site.add_users') }}">
-            <img title="添加待监测用户" style="width: 3%; height: 3%"
+            <img title="添加待同步用户" style="width: 3%; height: 3%"
                 src="http://www.haotu.net/up/2443/512/add_user.png"/>
         </a>
         &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;
-        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待监测用户</a>
+        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待同步用户</a>
     </h3>
-{#     <div style="margin-top: 30px; margin-bottom: 10px;"></div>
-    </div> #}
+
 {% endblock %}

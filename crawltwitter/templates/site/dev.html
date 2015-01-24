@@ -27,9 +27,9 @@
         </a>
     </h3>
     <h3>
-        添加待监测用户
+        添加待同步用户
         <a id='twitter-add-target-user' href="{{ url_for('site.add_users') }}">
-            <img title="添加待监测用户" style="width: 3%; height: 3%"
+            <img title="添加待同步用户" style="width: 3%; height: 3%"
                 src="http://www.haotu.net/up/2443/512/add_user.png"/>
         </a>
     </h3>
@@ -72,11 +72,8 @@
         <a id='all-valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>
     </h3>
     <h3>
-        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待监测用户</a>
+        <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待同步用户</a>
     </h3>
-{#     <h3>
-        <a id='all-tweets' href="{{ url_for('site.tweets') }}">所有tweet</a>
-    </h3> #}
 
     </div>
 {% endblock %}

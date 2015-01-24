@@ -20,7 +20,7 @@ config = load_config()
 @app.task
 def update_user_info():
     """更新用户信息
-    取消已被取消监测但尚未被用户取消关注的用户
+    取消已被取消同步但尚未被用户取消关注的用户
     抓取消息每15min执行一次，更新信息每14min执行一次
     """
     flask_app = create_app()
@@ -54,7 +54,7 @@ def update_user_info():
                     print accesstoken.user.screen_name + ' access_token exceeds limit'
                     break
                 print 'update_user_info success, user_id:' + user.user_id
-        # 取消已被取消监测但尚未被用户取消关注的用户
+        # 取消已被取消同步但尚未被用户取消关注的用户
         users = User.query.filter(
             User.monitor_user_id != None).filter_by(is_target=0).all()
         for user in users:
@@ -83,7 +83,7 @@ def crawl_home_timeline():
     """从home_timeline定期抓取消息"""
     flask_app = create_app()
     with flask_app.app_context():
-        # 记录待添监测用户的user_id和id
+        # 记录待添同步用户的user_id和id
         target_users_dict = {}
         target_users = User.query.filter_by(is_target=True).all()
         for target_user in target_users:
@@ -155,7 +155,7 @@ def crawl_home_timeline():
                     # 只添加目标用户的tweet
                     #         "created_at": "Thu Jan 22 17:20:23 +0000 2015"
                     if status.user.id_str in target_users_dict:
-                        # 此处需要更新待监测目标的属性值，但考虑到api受限，并且必要性不大暂不进行
+                        # 此处需要更新待同步目标的属性值，但考虑到api受限，并且必要性不大暂不进行
                         # -------------------------------------------------------------
                         ss = Status(status_id=status.id_str,
                                     text=status.text,

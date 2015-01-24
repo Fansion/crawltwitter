@@ -28,3 +28,14 @@ class Config:
 
     STATUS_PER_PAGE = 5
     USER_PER_PAGE = 10
+    APPLICATION_PER_PAGE = 10
+
+    CELERY_ACCEPT_CONTENT = ['pickle']
+
+    MAX_FOLLOWERS_COUNT = 1000
+
+    CALLBACK_URL = 'http://localhost:5000/twitter_signin'
+
+    # 15min内api调用上限
+    API_USER_SHOW_MAXIMUM = 180
+    API_USER_HOME_TIMELINE_MAXIMUM = 15 * 200

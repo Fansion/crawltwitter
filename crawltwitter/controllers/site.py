@@ -124,7 +124,7 @@ def applications():
     page = request.args.get('page', 1, int)
     applications = Application.query.filter_by(is_valid=True)
     applications = applications.paginate(page,
-                                         current_app.config['APPLICATION'],
+                                         current_app.config['APPLICATION_PER_PAGE'],
                                          error_out=True
                                          )
     return render_template('site/applications.html', applications=applications)
@@ -191,7 +191,7 @@ def add_application():
 @bp.route('/add_users', methods=['GET', 'POST'])
 @has_valid_application
 def add_users():
-    """添加待监测用户"""
+    """添加待同步用户"""
     application = Application.query.filter_by(is_valid=True).first()
     auth = tweepy.OAuthHandler(
         application.consumer_token,
@@ -205,14 +205,14 @@ def add_users():
         if not accesstokens:
             flash('数据表中无可用access_token，请用任意账户登陆授权')
             return redirect(url_for('site.twitter_pre_signin'))
-        # 且考虑用户添加待监测目标上限为1000
+        # 且考虑用户添加待同步目标上限为1000
         accesstoken = None
         for an in accesstokens:
             if an.user.followers_count < current_app.config['MAX_FOLLOWERS_COUNT']:
                 accesstoken = an
                 break
         if not accesstoken:
-            flash('所有用户各自添加待监测用户数超过上限，请用任意新账户登陆授权')
+            flash('所有用户各自添加待同步用户数超过上限，请用任意新账户登陆授权')
             return redirect(url_for('site.twitter_pre_signin'))
 
         auth.set_access_token(
@@ -259,8 +259,8 @@ def add_users():
                                 accesstoken.user.screen_name + '的人关注'
                             )
                         # 两种情况都需要添加该目标用户
-                        # 将该用户添加为待监测用户，从home_timeline中只取目标用户的tweet
-                        flash(accesstoken.user.screen_name + '成功添加新的待监测用户')
+                        # 将该用户添加为待同步用户，从home_timeline中只取目标用户的tweet
+                        flash(accesstoken.user.screen_name + '成功添加新的待同步用户')
                         db.session.add(user)
                 else:  # 已经在user表中
                     if user.monitor_user_id:
@@ -271,7 +271,7 @@ def add_users():
                             flash(
                                 name + '已经被screen_name为' + monitor_user.screen_name + '的人关注')
                         else:
-                            # 重新添加已删除用户为待监测用户
+                            # 重新添加已删除用户为待同步用户
                             # 改变is_target，并且需关注
                             user.is_target = True
                             db.session.add(user)
@@ -292,7 +292,7 @@ def add_users():
 
 @bp.route('/delete_target_user', methods=['POST'])
 def delete_target_user():
-    """删除待监测用户
+    """删除待同步用户
     策略是将该用户is_target设为False，已经抓取的推文不做处理
     但考虑到api.home_timeline抓取上限，同时需要解除关注关系
     """
@@ -451,7 +451,7 @@ def crawl_home_timeline():
     # from celery_proj.tasks import crawl_home_timeline
     # crawl_home_timeline.delay()
 
-    # 记录待添监测用户的user_id和id
+    # 记录待添同步用户的user_id和id
     target_users_dict = {}
     target_users = User.query.filter_by(is_target=True).all()
     for target_user in target_users:
@@ -523,7 +523,7 @@ def crawl_home_timeline():
                 # 只添加目标用户的tweet
                 #         "created_at": "Thu Jan 22 17:20:23 +0000 2015"
                 if status.user.id_str in target_users_dict:
-                    # 此处需要更新待监测目标的属性值，但考虑到api受限，并且必要性不大暂不进行
+                    # 此处需要更新待同步目标的属性值，但考虑到api受限，并且必要性不大暂不进行
                     # -------------------------------------------------------------
                     ss = Status(status_id=status.id_str,
                                 text=status.text,
@@ -574,7 +574,7 @@ def update_user_info():
                 print accesstoken.user.screen_name + ' access_token exceeds limit'
                 break
             print 'update_user_info success, user_id:' + user.user_id
-    # 取消已被取消监测但尚未被用户取消关注的用户
+    # 取消已被取消同步但尚未被用户取消关注的用户
     users = User.query.filter(
         User.monitor_user_id != None).filter_by(is_target=0).all()
     for user in users:

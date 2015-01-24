@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% from "macro/common.html" import pagination, horizontal_field %}
 
-{% block page_title %}所有待监测用户页
+{% block page_title %}所有待同步用户页
 {% endblock %}
 {% block page_id %}page-target-users
 {% endblock %}
@@ -10,7 +10,7 @@
     {{ super() }}
     <div class="row">
         <legend>
-            所有待监测用户
+            所有待同步用户
         </legend>
         {% if target_users.items %}
             <table class="table table-bordered">
@@ -52,7 +52,7 @@
                         <td>
                              <form method="post" action="{{ url_for('site.delete_target_user', user_id=user.user_id) }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <input class="btn btn-default" type="submit" name="delete_target_user" value="取消监测">
+                                <input class="btn btn-default" type="submit" name="delete_target_user" value="取消同步">
                              </form>
                         </td>
                     </tr>

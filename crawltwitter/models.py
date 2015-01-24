@@ -52,7 +52,7 @@ class User(db.Model):
     since_id = db.Column(db.String(30), default='0')
     # 是否为待监控用户
     is_target = db.Column(db.Boolean, default=False)
-    # 关注者id，表明该待监测用户被monitor_user_id关注
+    # 关注者id，表明该待同步用户被monitor_user_id关注
     monitor_user_id = db.Column(mysql.INTEGER(30))
 
     access_tokens = db.relationship(
@@ -95,7 +95,7 @@ class Status(db.Model):
 
     # 被关注者id，表明该tweet是user_id发出的
     user_id = db.Column(mysql.INTEGER(30), db.ForeignKey('users.id'))
-    # 关注者id，表明该tweet是id关注待监测用户之后产生的
+    # 关注者id，表明该tweet是id关注待同步用户之后产生的
     monitor_user_id = db.Column(mysql.INTEGER(30))
 
     def __repr__(self):
