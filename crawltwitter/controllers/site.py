@@ -124,7 +124,8 @@ def applications():
     page = request.args.get('page', 1, int)
     applications = Application.query.filter_by(is_valid=True)
     applications = applications.paginate(page,
-                                         current_app.config['APPLICATION_PER_PAGE'],
+                                         current_app.config[
+                                             'APPLICATION_PER_PAGE'],
                                          error_out=True
                                          )
     return render_template('site/applications.html', applications=applications)
@@ -599,6 +600,11 @@ def update_user_info():
     return render_template('site/index.html')
 
 
+@bp.route('/')
+def about():
+    return render_template('site/about.html')
+
+
 @bp.route('/dev')
 def dev():
     return render_template('site/dev.html')
@@ -607,8 +613,3 @@ def dev():
 @bp.route('/index')
 def index():
     return render_template('site/index.html')
-
-
-@bp.route('/')
-def home():
-    return redirect(url_for('site.tweets'))

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block page_title %}CT-关于{% endblock %}
+{% block page_id %}page-about{% endblock %}
+
+{% block body %}
+    <h3>关于</h3>
+    <hr />
+    <div class="col-md-8 about">
+        
+        <h4>Here is a place backing up tweets of twitter accounts for users under GFW.</h4>
+        <h4>这里是Twitter账号推文信息的同步站点。</h4>
+
+        <div style="margin-top: 30px; margin-bottom: 30px;"></div>
+
+        <p>添加任意你想关注的Twitter账号，就可以越过GFW查看该账号的最新推文！ <br/>
+        比如： <br/>
+        添加BillGates <br/>
+        你就可以查看Bill在Twitter上的社交生活。</p>
+        
+        <div style="margin-top: 30px; margin-bottom: 100px;"></div>
+        <div class="duoshuo">
+            <!-- 多说评论框 start -->
+            <div class="ds-thread" data-thread-key="1" data-title="about" data-url="crawltwitter.ifanan.com/about"></div>
+            <!-- 多说评论框 end -->
+        </div>
+    </div>
+    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"crawltwitter"};
+        (function() {
+            var ds = document.createElement('script');
+            ds.type = 'text/javascript';ds.async = true;
+            ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            ds.charset = 'UTF-8';
+            (document.getElementsByTagName('head')[0] 
+             || document.getElementsByTagName('body')[0]).appendChild(ds);
+        })();
+    </script>
+    <!-- 多说公共JS代码 end -->
+{% endblock %}

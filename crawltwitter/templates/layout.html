@@ -33,14 +33,16 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for('site.index') }}">CrawlTwitter
-                <small class="small">dev</small>
+            <a class="navbar-brand" href="{{ url_for('site.about') }}">CrawlTwitter
+                <sup>Alpha</sup>
             </a>
         </div>
         <div class="collapse navbar-collapse my-navbar-collapse">
-
+            <ul class="nav navbar-nav">
+              　<li><a href="{{ url_for('site.index') }}">主页</a></li>
+            </ul>
             <ul class="nav navbar-nav navbar-right">
-                      <li><a href="{{ url_for('site.home') }}">所有推文</a></li>
+              　<li><a href="{{ url_for('site.tweets') }}">所有推文</a></li>
             </ul>
         </div>
     </div>
