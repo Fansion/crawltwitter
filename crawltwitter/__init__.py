@@ -7,7 +7,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from flask_wtf.csrf import CsrfProtect
 from flask.ext.moment import Moment
 
-from crawltwitter.config import load_config
+from .config import load_config
 
 config = load_config()
 

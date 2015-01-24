@@ -22,7 +22,7 @@
                     <tr>
                         <td>
                             <span class="larger label label-default">
-                                {{ status.user.name }}
+                                <a href="{{ url_for('site.user', id=status.user_id)  }}">{{ status.user.name }}</a>
                             </span>
                         </td>
                         <td>

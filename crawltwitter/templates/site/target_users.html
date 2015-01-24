@@ -28,7 +28,7 @@
                     <tr>
                         <td>
                             <span class="larger label label-danger">
-                                {{ user.name }}
+                                <a href="{{ url_for('site.user', id=user.id)  }}">{{ user.name }}</a>
                             </span>
                         </td>
                         <td>

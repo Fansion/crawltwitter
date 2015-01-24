@@ -8,9 +8,11 @@ import tweepy
 from ..models import db, AccessToken, User, Status, Application
 from ..forms import UserForm, ApplicationForm
 from ..decorators import has_valid_application, has_access_token, already_has_valid_application
+from ..filters import filter_emoji
 
 from datetime import datetime, timedelta
 from functools import wraps
+import re
 
 bp = Blueprint('site', __name__)
 
@@ -74,7 +76,8 @@ def save_user_and_token_access():
             user = User(user_id=me.id_str, name=me.name, screen_name=me.screen_name,
                         location=me.location, statuses_count=me.statuses_count,
                         followers_count=me.followers_count, friends_count=me.friends_count,
-                        created_at=me.created_at
+                        created_at=me.created_at, profile_image_url=me.profile_image_url,
+                        url=me.url
                         )
             db.session.add(user)
             db.session.commit()
@@ -172,6 +175,19 @@ def tweets():
     return render_template('site/statuses.html', statuses=statuses)
 
 
+@bp.route('/user')
+def user():
+    id = request.args.get('id', 0, int)
+    user = User.query.filter_by(id=id).first()
+    if user:
+        tweets = Status.query.filter_by(
+            user_id=id).order_by(Status.created_at.desc()).all()
+    else:
+        return render_template('site/404.html')
+
+    return render_template('site/user.html', user=user, tweets=tweets)
+
+
 @bp.route('/add_application', methods=['GET', 'POST'])
 @already_has_valid_application
 def add_application():
@@ -251,7 +267,8 @@ def add_users():
                                     friends_count=target_user.friends_count,
                                     created_at=target_user.created_at,
                                     monitor_user_id=accesstoken.user.id,
-                                    is_target=True
+                                    is_target=True, url=target_user.url,
+                                    profile_image_url=target_user.profile_image_url,
                                     )
                         # 有合法access_token的用户尚未关注该目标用户则直接关注
                         # 不需考虑其他有合法access_token账户可能已经关注该用户，造成status重复
@@ -338,7 +355,7 @@ def delete_valid_user():
 @bp.route('/delete_app', methods=['POST'])
 def delete_app():
     """删除应用"""
-    app_id = request.args.get('app_id', 0)
+    app_id = request.args.get('app_id', 0, int)
     application = Application.query.filter_by(id=app_id).first()
     if application:
         db.session.delete(application)
@@ -530,18 +547,31 @@ def crawl_home_timeline():
                 if status.user.id_str in target_users_dict:
                     # 此处需要更新待同步目标的属性值，但考虑到api受限，并且必要性不大暂不进行
                     # -------------------------------------------------------------
-                    ss = Status(status_id=status.id_str,
-                                text=status.text,
-                                created_at=status.created_at,
-                                user_id=target_users_dict[status.user.id_str],
-                                monitor_user_id=accesstoken.user.id
-                                )
+                    # 将推文插入数据库时会出现4个字节的emoji符号编码，无法插入utf8的mysql数据库
+                    if hasattr(status, 'extended_entities'):
+                        ss = Status(status_id=status.id_str,
+                                    text=filter_emoji(status.text),
+                                    created_at=status.created_at,
+                                    user_id=target_users_dict[
+                                        status.user.id_str],
+                                    monitor_user_id=accesstoken.user.id,
+                                    media_url=status.extended_entities['media'][
+                                        0]['media_url']
+                                    )
+                    else:
+                        ss = Status(status_id=status.id_str,
+                                    text=filter_emoji(status.text),
+                                    created_at=status.created_at,
+                                    user_id=target_users_dict[
+                                        status.user.id_str],
+                                    monitor_user_id=accesstoken.user.id,
+                                    )
                     db.session.add(ss)
                 else:
                     # celery中记录中文日志在/var/log/celery/crawltwitter-work.log会乱码
                     # 目前未解决
                     print 'user not in target_user list, userid:' + str(status.user.id_str) + '，　status_id:' + str(status.id_str)
-        db.session.commit()
+            db.session.commit()
     flash('正在更新数据请稍等，若数据无变化请刷新本页')
     import time
     time.sleep(2)
