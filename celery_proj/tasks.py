@@ -12,6 +12,7 @@ from crawltwitter import create_app
 from crawltwitter.config import load_config
 from crawltwitter.models import db, AccessToken, User, Status
 from crawltwitter.decorators import has_valid_application
+from crawltwitter.filters import filter_emoji
 
 
 config = load_config()
@@ -42,12 +43,14 @@ def update_user_info():
             for user in users:
                 try:
                     new_user = api.get_user(user.screen_name)
-                    user.name = new_user.name,
-                    user.screen_name = new_user.screen_name,
-                    user.location = new_user.location,
-                    user.statuses_count = new_user.statuses_count,
-                    user.followers_count = new_user.followers_count,
-                    user.friends_count = new_user.friends_count,
+                    user.name = new_user.name
+                    user.screen_name = new_user.screen_name
+                    user.location = new_user.location
+                    user.statuses_count = new_user.statuses_count
+                    user.followers_count = new_user.followers_count
+                    user.friends_count = new_user.friends_count
+                    user.url = new_user.url
+                    user.profile_image_url=new_user.profile_image_url
                     db.session.add(user)
                 except Exception, e:
                     print 'error message: %s' % e
@@ -156,14 +159,26 @@ def crawl_home_timeline():
                     #         "created_at": "Thu Jan 22 17:20:23 +0000 2015"
                     if status.user.id_str in target_users_dict:
                         # 此处需要更新待同步目标的属性值，但考虑到api受限，并且必要性不大暂不进行
+                        # 将推文插入数据库时会出现4个字节的emoji符号编码，无法插入utf8的mysql数据库
                         # -------------------------------------------------------------
-                        ss = Status(status_id=status.id_str,
-                                    text=status.text,
-                                    created_at=status.created_at,
-                                    user_id=target_users_dict[
-                                        status.user.id_str],
-                                    monitor_user_id=accesstoken.user.id
-                                    )
+                        if hasattr(status, 'extended_entities'):
+                            ss = Status(status_id=status.id_str,
+                                        text=filter_emoji(status.text),
+                                        created_at=status.created_at,
+                                        user_id=target_users_dict[
+                                            status.user.id_str],
+                                        monitor_user_id=accesstoken.user.id,
+                                        media_url=status.extended_entities['media'][
+                                            0]['media_url']
+                                        )
+                        else:
+                            ss = Status(status_id=status.id_str,
+                                        text=filter_emoji(status.text),
+                                        created_at=status.created_at,
+                                        user_id=target_users_dict[
+                                            status.user.id_str],
+                                        monitor_user_id=accesstoken.user.id,
+                                        )
                         db.session.add(ss)
                     else:
                         # celery中记录中文日志在/var/log/celery/crawltwitter-work.log会乱码

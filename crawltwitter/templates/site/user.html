@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block page_title %}用户{% endblock %}
+{% block page_id %}page-user{% endblock %}
+
+{% block body %}
+    {{ super() }}
+    <div class="user">
+        <img src="{{ user.profile_image_url }}" width="48" height="48" alt="" class="avatar" />
+        <div id="user-info">
+            {% if user.url %}
+                <a href="{{ user.url }}" id="user-url"><strong id="username">{{ user.name }}</strong></a>
+            {% else %}
+                <strong id="username">{{ user.name }}</strong>
+            {% endif %}
+
+            <span id="user-sn"><a href="http://twitter.com/ruanyf">@{{ user.screen_name }}</a></span><br />
+            {% if user.location %}
+                <span id="user-loc">{{ user.location }}</span>
+            {% else %}
+                <span id="user-loc">World</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2>最新推文</h2>
+    {% for tweet in tweets %}
+        <div class="tweet-item">
+            <div class="tweet">
+                <p>{{ tweet.text | urlize }}</p>
+                {% if tweet.media_url  %}
+                    <p><img width="400" height="300" src="{{ tweet.media_url }}" class="attachment-medium" alt="attachment-medium" /></p>
+                {% endif %}
+            </div>
+            <div class="meta">
+                {{ moment(tweet.created_at).fromNow(refresh=True)}}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

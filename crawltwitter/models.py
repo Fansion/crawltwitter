@@ -54,6 +54,10 @@ class User(db.Model):
     is_target = db.Column(db.Boolean, default=False)
     # 关注者id，表明该待同步用户被monitor_user_id关注
     monitor_user_id = db.Column(mysql.INTEGER(30))
+    # 图像地址
+    profile_image_url = db.Column(db.String(150))
+    # url
+    url = db.Column(db.String(150))
 
     access_tokens = db.relationship(
         'AccessToken', backref='user', lazy='dynamic', order_by='desc(AccessToken.created_at)')
@@ -92,6 +96,9 @@ class Status(db.Model):
     status_id = db.Column(db.String(30))
     text = db.Column(db.String(150))
     created_at = db.Column(db.DateTime)
+    # 图片地址
+    media_url = db.Column(db.String(150))
+
 
     # 被关注者id，表明该tweet是user_id发出的
     user_id = db.Column(mysql.INTEGER(30), db.ForeignKey('users.id'))
