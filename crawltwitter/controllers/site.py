@@ -4,11 +4,13 @@ __author__ = 'frank'
 
 from flask import Blueprint, render_template, redirect, session, request, url_for, flash, current_app
 import tweepy
+from sqlalchemy import extract
 
 from ..models import db, AccessToken, User, Status, Application
 from ..forms import UserForm, ApplicationForm
 from ..decorators import has_valid_application, has_access_token, already_has_valid_application
 from ..filters import filter_emoji
+from ..utils import get_nav_items
 
 from datetime import datetime, timedelta
 from functools import wraps
@@ -121,10 +123,10 @@ def update_status():
     return redirect(url_for('site.index'))
 
 
-@bp.route('/applications')
+@bp.route('/applications/', defaults={'page': 1})
+@bp.route('/applications/<int:page>')
 @has_valid_application
-def applications():
-    page = request.args.get('page', 1, int)
+def applications(page):
     applications = Application.query.filter_by(is_valid=True)
     applications = applications.paginate(page,
                                          current_app.config[
@@ -134,11 +136,11 @@ def applications():
     return render_template('site/applications.html', applications=applications)
 
 
-@bp.route('/valid_users')
+@bp.route('/valid_users/', defaults={'page': 1})
+@bp.route('/valid_users/<int:page>')
 @has_access_token_in_db
 @has_valid_application
-def valid_users():
-    page = request.args.get('page', 1, int)
+def valid_users(page):
     valid_users = User.query.join(AccessToken).filter_by(
         is_valid=True).order_by(User.id.desc())
     valid_users = valid_users.paginate(page,
@@ -148,11 +150,11 @@ def valid_users():
     return render_template('site/valid_users.html', valid_users=valid_users)
 
 
-@bp.route('/target_users')
+@bp.route('/target_users/', defaults={'page': 1})
+@bp.route('/target_users/<int:page>')
 @has_access_token_in_db
 @has_valid_application
-def target_users():
-    page = request.args.get('page', 1, int)
+def target_users(page):
     target_users = User.query.filter_by(
         is_target=True).order_by(User.id.desc())
     target_users = target_users.paginate(page,
@@ -162,9 +164,9 @@ def target_users():
     return render_template('site/target_users.html', target_users=target_users)
 
 
-@bp.route('/tweets')
-def tweets():
-    page = request.args.get('page', 1, int)
+@bp.route('/tweets/', defaults={'page': 1})
+@bp.route('/tweets/<int:page>')
+def tweets(page):
     # 只显示待同步用户的推文
     statuses = Status.query.join(User).filter(
         User.is_target == True).order_by(Status.created_at.desc())
@@ -177,19 +179,42 @@ def tweets():
     return render_template('site/statuses.html', statuses=statuses, target_users_count=target_users_count, statuses_count=statuses_count)
 
 
-@bp.route('/target_user')
-def target_user():
-    """与之前程序兼容同时传递screen_name"""
-    screen_name = request.args.get('screen_name', None)
+@bp.route('/target_user/<screen_name>', defaults={'year': None, 'month': None})
+@bp.route('/target_user/<screen_name>/<year>/<month>')
+def target_user(screen_name, year, month):
+    """优化url格式
+    增加按年月查找
+    """
     user = User.query.filter_by(screen_name=screen_name).first()
-    tweets = Status.query.filter_by(
-        user_id=user.id).order_by(Status.created_at.desc()).all()
-    return render_template('site/user.html', user=user, tweets=tweets)
+    earliest_tweet = Status.query.filter_by(
+        user_id=user.id).order_by(Status.created_at).first()
+    if earliest_tweet:
+        # get list like  [('2015', '01', 'January 2015')]
+        items = get_nav_items(
+            str(earliest_tweet.created_at), str(datetime.utcnow()))
+        nav_items = []
+        for y, m, item in items:
+            # search year in datetime column
+            count = Status.query.filter_by(user_id=user.id).filter(extract(
+                'year', Status.created_at) == y).filter(extract('month', Status.created_at) == m).count()
+            # 只显示发推月份的nav_item
+            if count:
+                nav_items.append((y, m, item, count))
+        if year and month:
+            tweets = Status.query.filter_by(user_id=user.id).filter(extract('year', Status.created_at) == year).filter(
+                extract('month', Status.created_at) == month).order_by(Status.created_at.desc()).all()
+        else:
+            tweets = Status.query.filter_by(user_id=user.id).order_by(
+                Status.created_at.desc()).all()
+    else:
+        tweets = None
+        nav_items = None
+
+    return render_template('site/user.html', user=user, tweets=tweets, nav_items=nav_items)
 
 
-@bp.route('/user')
-def user():
-    id = request.args.get('id', 0, int)
+@bp.route('/user/<int:id>')
+def user(id):
     user = User.query.filter_by(id=id).first()
     if user:
         return redirect(url_for('site.target_user', screen_name=user.screen_name))
@@ -200,7 +225,6 @@ def user():
 @bp.route('/add_application', methods=['GET', 'POST'])
 @already_has_valid_application
 def add_application():
-    page = request.args.get('page', 1, int)
     form = ApplicationForm()
     applications = None
 
@@ -219,6 +243,7 @@ def add_application():
 
 
 @bp.route('/add_users', methods=['GET', 'POST'])
+@has_access_token_in_db
 @has_valid_application
 def add_users():
     """添加待同步用户"""
@@ -321,13 +346,13 @@ def add_users():
     return render_template('site/add_users.html', form=form)
 
 
-@bp.route('/delete_target_user', methods=['POST'])
-def delete_target_user():
+@bp.route('/delete_target_user/', defaults={'user_id': None})
+@bp.route('/delete_target_user/<user_id>', methods=['POST'])
+def delete_target_user(user_id):
     """删除待同步用户
     策略是将该用户is_target设为False，已经抓取的推文不做处理
     但考虑到api.home_timeline抓取上限，同时需要解除关注关系
     """
-    user_id = request.args.get('user_id', '')
     user = User.query.filter_by(
         is_target=True).filter_by(user_id=user_id).first()
     if user:
@@ -342,13 +367,13 @@ def delete_target_user():
     return redirect(url_for('site.target_users'))
 
 
-@bp.route('/delete_valid_user', methods=['POST'])
-def delete_valid_user():
+@bp.route('/delete_valid_user/', defaults={'user_id': None})
+@bp.route('/delete_valid_user/<user_id>', methods=['POST'])
+def delete_valid_user(user_id):
     """删除已授权用户
     accestoken设置is_valid=False
     不需要直接删除user，因为显示valid_users会联合查询
     """
-    user_id = request.args.get('user_id', '')
     accesstoken = AccessToken.query.join(User).filter(
         AccessToken.is_valid == True).filter(User.user_id == user_id).first()
     if accesstoken:
@@ -361,10 +386,10 @@ def delete_valid_user():
     return redirect(url_for('site.valid_users'))
 
 
+@bp.route('/delete_app/', defaults={'app_id': None})
 @bp.route('/delete_app', methods=['POST'])
-def delete_app():
+def delete_app(app_id):
     """删除应用"""
-    app_id = request.args.get('app_id', 0, int)
     application = Application.query.filter_by(id=app_id).first()
     if application:
         db.session.delete(application)
@@ -497,6 +522,7 @@ def crawl_home_timeline():
 
         api = tweepy.API(auth)
 
+        statuses = []
         try:
             if accesstoken.user.since_id == '0':
                 # statuses为list，按照时间由新到旧排列，格式如下：
@@ -518,7 +544,6 @@ def crawl_home_timeline():
                     since_id=long(accesstoken.user.since_id),
                     # count=200, page=15
                 ).items(current_app.config['API_USER_HOME_TIMELINE_MAXIMUM'])
-                statuses = []
                 # statuses同样是按照时间由新到旧排列
                 for item in items:
                     statuses.append(item)

@@ -4,41 +4,60 @@
 {% block page_id %}page-user{% endblock %}
 
 {% block body %}
-    {{ super() }}
-    <div class="user">
-        <img src="{{ user.profile_image_url }}" width="48" height="48" alt="" class="avatar" />
-        <div id="user-info">
-            {% if user.url %}
-                <a href="{{ user.url }}" id="user-url"><strong id="username">{{ user.name }}</strong></a>
-            {% else %}
-                <strong id="username">{{ user.name }}</strong>
-            {% endif %}
+{{ super() }}
+<div class="row">
+    <div class="col-md-9">
+        <div class="user">
+            <img src="{{ user.profile_image_url }}" width="48" height="48" alt="" class="avatar" />
+            <div id="user-info">
+                {% if user.url %}
+                    <a href="{{ user.url }}" id="user-url"><strong id="username">{{ user.name }}</strong></a>
+                {% else %}
+                    <strong id="username">{{ user.name }}</strong>
+                {% endif %}
 
-            <span id="user-sn"><a href="http://twitter.com/{{ user.screen_name }}">@{{ user.screen_name }}</a></span><br />
-            {% if user.location %}
-                <span id="user-loc">{{ user.location }}</span>
-            {% else %}
-                <span id="user-loc">World</span>
+                <span id="user-sn"><a href="http://twitter.com/{{ user.screen_name }}">@{{ user.screen_name }}</a></span><br />
+                {% if user.location %}
+                    <span id="user-loc">{{ user.location }}</span>
+                {% else %}
+                    <span id="user-loc">World</span>
+                {% endif %}
+            </div>
+        </div>
+        <h2>最新推文</h2>
+        {% if tweets %}
+            {% for tweet in tweets %}
+                <div class="tweet-item">
+                    <div class="tweet">
+                        <p>{{ tweet.text | urlize }}</p>
+                        {% if tweet.media_url  %}
+                            <p><img width="400" height="300" src="{{ tweet.media_url }}" class="attachment-medium" alt="attachment-medium" /></p>
+                        {% endif %}
+                    </div>
+                    <div class="meta">
+                        {{ moment(tweet.created_at).fromNow(refresh=True)}}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h5>暂无</h5>
+        {% endif %}
+    </div>
+    <div class="col-md-3">
+        <div class="nav">
+            {# like  [('2015', '01', 'January 2015', 12)] #}
+            {% if nav_items %}
+                <a href="{{ url_for('site.target_user', screen_name=user.screen_name)  }}" id="all-tweets">全部</a>
+                {% for y, m, item, count in nav_items %}
+                   <div class="nav-item">
+                        <a href="{{ url_for('site.target_user', screen_name=user.screen_name, year=y, month=m)  }}" id="user-url">{{ item }}
+                            <span class="count">{{ count }}</span>
+                        </a>
+                   </div>
+                {% endfor %}
             {% endif %}
         </div>
     </div>
-    <h2>最新推文</h2>
-    {% if tweets %}
-        {% for tweet in tweets %}
-            <div class="tweet-item">
-                <div class="tweet">
-                    <p>{{ tweet.text | urlize }}</p>
-                    {% if tweet.media_url  %}
-                        <p><img width="400" height="300" src="{{ tweet.media_url }}" class="attachment-medium" alt="attachment-medium" /></p>
-                    {% endif %}
-                </div>
-                <div class="meta">
-                    {{ moment(tweet.created_at).fromNow(refresh=True)}}
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <h5>暂无</h5>
-    {% endif %}
+</div>
 
 {% endblock %}
