@@ -1,43 +1,48 @@
 {% extends "layout.html" %}
 {% from "macro/common.html" import field_errors, horizontal_field, pagination %}
 
-{% block page_title %}所有推文页
-{% endblock %}
-{% block page_id %}page-tweets
-{% endblock %}
+{% block page_title %}所有推文页{% endblock %}
+{% block page_id %}page-tweets{% endblock %}
 
 {% block body %}
     {{ super() }}
     <div class="row">
+        <div class="overview" style="font-weight: bold">
+        截止到目前已同步<a href="{{ url_for('site.target_users') }}" target="_blank">{{ target_users_count }}个</a>Twitter账号，共{{ statuses_count }}篇推文
+        </div>
         <legend>所有推文</legend>
         {% if statuses.items %}
-            <table class="table table-bordered">
-                <tr>
-                    <td>作者</td>
-                    <td>内容</td>
-                    <td>时间</td>
-                    <td>推文ID</td>
-                </tr>
-                {% for status in statuses.items %}
-                    <tr>
-                        <td>
-                            <span class="larger label label-default">
-                                <a href="{{ url_for('site.user', id=status.user_id)  }}">{{ status.user.name }}</a>
+            {% for status in statuses.items %}
+                <div class="tweet-item">
+                    <div class="user">
+                        <a href="{{ url_for('site.user', id=status.user.id) }}" target="_blank">
+                            <img src="{{ status.user.profile_image_url }}" width="48" height="48" alt="" class="avatar" />
+                        </a>
+                        <div id="user-info">
+                            {% if status.user.url %}
+                                <strong id="username">{{ status.user.name }}</strong>
+                            {% else %}
+                                <strong id="username">{{ status.user.name }}</strong>
+                            {% endif %}
+                            <span id="user-sn"><a href="{{ status.user.url }}" id="user-url" target="_blank">@{{ status.user.screen_name }}</a></span><br />
+                            {% if status.user.location %}
+                                <span id="user-loc">{{ status.user.location }}</span>
+                            {% else %}
+                                <span id="user-loc">World</span>
+                            {% endif %}
+                            <span class="meta">
+                                {{ moment(status.created_at).fromNow(refresh=True)}}
                             </span>
-                        </td>
-                        <td>
-                                {{ status.text }}
-                        </td>
-                        <td>
-
-                                {{ moment(status.created_at).fromNow(refresh=True) }}
-                        </td>
-                        <td>
-                                {{ status.status_id }}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </table>
+                        </div>
+                    </div>
+                    <div class="tweet">
+                        <p>{{ status.text | urlize }}</p>
+                        {% if status.media_url  %}
+                            <p><img width="400" height="300" src="{{ status.media_url }}" class="attachment-medium" alt="attachment-medium" /></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
         {% else %}
             <h5 class="table">暂无</h5>
         {% endif %}

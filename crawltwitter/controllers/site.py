@@ -172,7 +172,19 @@ def tweets():
                                  current_app.config['STATUS_PER_PAGE'],
                                  error_out=True
                                  )
-    return render_template('site/statuses.html', statuses=statuses)
+    target_users_count = User.query.filter_by(is_target=True).count()
+    statuses_count = Status.query.count()
+    return render_template('site/statuses.html', statuses=statuses, target_users_count=target_users_count, statuses_count=statuses_count)
+
+
+@bp.route('/target_user')
+def target_user():
+    """与之前程序兼容同时传递screen_name"""
+    screen_name = request.args.get('screen_name', None)
+    user = User.query.filter_by(screen_name=screen_name).first()
+    tweets = Status.query.filter_by(
+        user_id=user.id).order_by(Status.created_at.desc()).all()
+    return render_template('site/user.html', user=user, tweets=tweets)
 
 
 @bp.route('/user')
@@ -180,12 +192,9 @@ def user():
     id = request.args.get('id', 0, int)
     user = User.query.filter_by(id=id).first()
     if user:
-        tweets = Status.query.filter_by(
-            user_id=id).order_by(Status.created_at.desc()).all()
+        return redirect(url_for('site.target_user', screen_name=user.screen_name))
     else:
         return render_template('site/404.html')
-
-    return render_template('site/user.html', user=user, tweets=tweets)
 
 
 @bp.route('/add_application', methods=['GET', 'POST'])
@@ -418,10 +427,6 @@ def twitter_pre_signin():
         session.get('consumer_token'),
         session.get('consumer_secret'),
         current_app.config['CALLBACK_URL']
-        # for pro
-        # "http://crawller.ifanan.com/twitter_signin"
-        # for debug
-        # "http://localhost:5000/twitter_signin"
     )
     try:
         redirect_url = auth.get_authorization_url()
