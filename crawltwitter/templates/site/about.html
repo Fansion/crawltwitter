@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block page_title %}CT-关于{% endblock %}
+{% block page_title %}CT-关于页{% endblock %}
 {% block page_id %}page-about{% endblock %}
 
 {% block body %}
@@ -15,9 +15,10 @@
         <p>添加任意你想关注的Twitter账号，就可以越过GFW查看该账号的最新推文！ <br/>
         比如： <br/>
         添加BillGates <br/>
-        你就可以查看Bill在Twitter上的社交生活。</p>
+        你就可以查看<a href="{{ url_for('site.target_user', screen_name='BillGates') }}" target="_blank">Bill</a>在Twitter上的社交生活。
+        </p>
 
-        <p>备注：本站部分链接需要翻墙才能访问，:(</p>
+        <p>备注：本站部分外链需要翻墙才能访问，:(</p>
 
         <div style="margin-top: 30px; margin-bottom: 100px;"></div>
         <div class="duoshuo">

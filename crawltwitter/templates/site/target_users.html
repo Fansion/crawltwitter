@@ -1,10 +1,8 @@
 {% extends "layout.html" %}
 {% from "macro/common.html" import pagination, horizontal_field %}
 
-{% block page_title %}所有待同步用户页
-{% endblock %}
-{% block page_id %}page-target-users
-{% endblock %}
+{% block page_title %}所有待同步用户页{% endblock %}
+{% block page_id %}page-target-users{% endblock %}
 
 {% block body %}
     {{ super() }}
@@ -28,7 +26,7 @@
                     <tr>
                         <td>
                             <span class="larger label label-danger">
-                                <a href="{{ url_for('site.user', id=user.id)  }}">{{ user.name }}</a>
+                                <a href="{{ url_for('site.user', id=user.id)  }}" target="_blank">{{ user.name }}</a>
                             </span>
                         </td>
                         <td>

@@ -99,28 +99,37 @@ h2 {
   font-size:24px;
 }
 /*layout.html end*/
-/*user.html begin*/
-#page-user .user {
+/*user.html statuses.html begin*/
+.user {
   float:left;
   width:100%;
-  margin:0 0 30px;
+  margin:0 0 10px;
   line-height:22px;
 }
-#page-user .user .avatar {
+#page-user .user {
+  margin:0 0 30px;
+}
+.user .avatar {
   float:left;
   margin:0 10px 0 0;
 }
-#page-user .tweet-item {
+.tweet-item {
   margin:0 0 10px;
   border-bottom:1px solid #eee;
 }
-#page-user .tweet a {
+.tweet {
+  font-size: 30px;
+}
+.tweet a {
   font-weight: bold;
 }
-#page-user .tweet img {
-    max-width:100%;
+.tweet a:hover {
+  color:#666;
 }
-#page-user .meta {
+.tweet img {
+  max-width:100%;
+}
+.meta {
   font-size:12px;
   color:#999;
 }
@@ -131,4 +140,5 @@ h2 {
 /*#page-user .meta a:hover {
   color:#666;
 }
-*//*user.html end*/
+*/
+/*user.html statuses.html end*/

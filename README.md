@@ -4,4 +4,4 @@ crawltwitter
 
 
 
-[crawl anyone's tweets](http://crawller.ifanan.com/).
+Backup [anyone's](http://crawller.ifanan.com/) tweets.
