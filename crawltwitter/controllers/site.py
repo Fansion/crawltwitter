@@ -697,6 +697,7 @@ def search(page):
         # res = requests.post(url, data=data).json()
         statuses = Status.query.filter(
             Status.text.like('%' + keyword + '%')).order_by(Status.created_at.desc())
+        statuses_count = len(statuses.all())
         statuses = statuses.paginate(page,
                                      current_app.config['STATUS_PER_PAGE'],
                                      error_out=True
@@ -705,7 +706,7 @@ def search(page):
             flash('抱歉，未找到与"' + keyword + '"相关的推文')
             return redirect(url_for('site.tweets'))
         else:
-            return render_template('site/statuses.html', statuses=statuses, statuses_count=len(statuses.items))
+            return render_template('site/statuses.html', statuses=statuses, statuses_count=statuses_count)
 
 
 @bp.route('/')

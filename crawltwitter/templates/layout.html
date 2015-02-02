@@ -51,6 +51,23 @@
                 </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
+              　<li>
+                     <button id="btn-convert" class="btn btn-sm btn-default navbar-btn">图</button>
+                </li>
+                <script type="text/javascript">
+                    $('#btn-convert').click(function () {
+                        if($("#btn-convert").text() == "图") {
+                            $("img").css("display", "block");
+                            $("#btn-convert").text("字");
+                            return;
+                        }
+                        if($("#btn-convert").text() == "字") {
+                            $("img").css("display", "none");
+                            $("#btn-convert").text("图");
+                            return;
+                        }
+                    });
+                </script>
               　<li><a href="{{ url_for('site.tweets') }}">所有推文</a></li>
             </ul>
         </div>
