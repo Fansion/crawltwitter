@@ -57,7 +57,9 @@
                 <script type="text/javascript">
                     $('#btn-convert').click(function () {
                         if($("#btn-convert").text() == "图") {
+                            // 翻页时会重新请求新的页面，同时会加载新的js和css
                             $("img").css("display", "block");
+                            $(document.head).append('<style>img { display: block; }</style>');
                             $("#btn-convert").text("字");
                             return;
                         }

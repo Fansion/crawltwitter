@@ -10,28 +10,30 @@
         所有功能
     </legend>
     <h3>
-        添加新应用
         <a id='twitter-add-application' href="{{ url_for('site.add_application') }}">
+            添加新应用
             <img title="添加新应用" style="width: 3%; height: 3%"
                 src="{{ url_for('static', filename='imgs/twitter-add-application.jpg') }}"/>
         </a>
     </h3>
     <h3>
-        授权新用户
         <a id='twitter-login-icon' href="{{ url_for('site.twitter_pre_signin') }}">
+            授权新用户
            <img title="用Twitter帐号登陆"
            src="{{ url_for('static', filename='imgs/twitter-login-icon.png') }}"/>
         </a>
-        &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;
+    </h3>
+    <h3>
         <a id='all-valid-users' href="{{ url_for('site.valid_users') }}">所有授权用户</a>
     </h3>
     <h3>
-        添加待同步用户
         <a id='twitter-add-target-user' href="{{ url_for('site.add_users') }}">
+            添加待同步用户
             <img title="添加待同步用户" style="width: 3%; height: 3%"
                 src="http://www.haotu.net/up/2443/512/add_user.png"/>
         </a>
-        &nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;
+    </h3>
+    <h3>
         <a id='all-target-users' href="{{ url_for('site.target_users') }}">所有待同步用户</a>
     </h3>
 
