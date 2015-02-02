@@ -8,8 +8,14 @@
     {{ super() }}
     <div class="row">
         <div class="overview" style="font-weight: bold">
-        截止到目前已同步<a href="{{ url_for('site.target_users') }}" target="_blank">{{ target_users_count }}个</a>Twitter账号，共{{ statuses_count }}篇推文
+            {% if target_users_count %}
+                截止到目前已同步<a href="{{ url_for('site.target_users') }}" target="_blank">{{ target_users_count }}个</a>Twitter账号
+            {% endif %}
+            {% if statuses_count %}
+                共{{ statuses_count }}篇推文
+            {% endif %}
         </div>
+
         <legend>所有推文</legend>
         {% if statuses.items %}
             {% for status in statuses.items %}

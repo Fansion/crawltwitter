@@ -40,6 +40,15 @@
         <div class="collapse navbar-collapse my-navbar-collapse">
             <ul class="nav navbar-nav">
               　<li><a href="{{ url_for('site.index') }}">主页</a></li>
+                <li>
+                    <form class="nav navbar-nav navbar-form" role="search" method="get" action="{{ url_for('site.search') }}">
+                        <input type="text" name="keyword" class="form-control input-sm"
+                               placeholder="推文关键字">
+                        <button class="btn btn-default btn-sm" type="submit" title="搜索">
+                           <span class="fa fa-search"></span>
+                        </button>
+                     </form>
+                </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
               　<li><a href="{{ url_for('site.tweets') }}">所有推文</a></li>

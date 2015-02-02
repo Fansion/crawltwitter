@@ -15,6 +15,7 @@ from ..utils import get_nav_items
 from datetime import datetime, timedelta
 from functools import wraps
 import re
+import requests
 
 bp = Blueprint('site', __name__)
 
@@ -439,6 +440,11 @@ def delete_status():
     return redirect(url_for('site.index'))
 
 
+@bp.route('/facebook_pre_signin')
+def facebook_pre_signin():
+    return render_template('site/facebook.html')
+
+
 @bp.route('/twitter_pre_signin')
 @has_valid_application
 def twitter_pre_signin():
@@ -664,6 +670,42 @@ def update_user_info():
             print 'call api.destroy_friendship error'
         print 'user_id:' + monitor_user.user_id + ' call api.destroy_friendship with ' + user.user_id + ' success'
     return render_template('site/index.html')
+
+
+@bp.route('/search/', defaults={'page': 1})
+@bp.route('/search/<int:page>')
+def search(page):
+    """模糊查找指定内容的推文"""
+    keyword = request.args.get('keyword', '')
+    if not keyword:
+        flash('请输入要查找的推文关键字')
+        return redirect(url_for('site.tweets'))
+    else:
+        # 从接口中读查询结果并显示
+        # url = "https://api.douban.com/v2/user/%d" % user_id
+        # user_info = requests.get(url).json()
+
+        # url = "https://www.douban.com/service/auth2/token"
+        # config = current_app.config
+        # data = {
+        #     'client_id': config.get('DOUBAN_CLIENT_ID'),
+        #     'client_secret': config.get('DOUBAN_SECRET'),
+        #     'redirect_uri': config.get('DOUBAN_REDIRECT_URI'),
+        #     'grant_type': 'authorization_code',
+        #     'code': code
+        # }
+        # res = requests.post(url, data=data).json()
+        statuses = Status.query.filter(
+            Status.text.like('%' + keyword + '%')).order_by(Status.created_at.desc())
+        statuses = statuses.paginate(page,
+                                     current_app.config['STATUS_PER_PAGE'],
+                                     error_out=True
+                                     )
+        if not statuses.items:
+            flash('抱歉，未找到与"' + keyword + '"相关的推文')
+            return redirect(url_for('site.tweets'))
+        else:
+            return render_template('site/statuses.html', statuses=statuses, statuses_count=len(statuses.items))
 
 
 @bp.route('/')
