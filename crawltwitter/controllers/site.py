@@ -442,7 +442,7 @@ def delete_status():
 
 @bp.route('/facebook_pre_signin')
 def facebook_pre_signin():
-    return render_template('site/facebook.html')
+    return render_template('site/facebook_login.html')
 
 
 @bp.route('/twitter_pre_signin')
@@ -671,30 +671,21 @@ def update_user_info():
         print 'user_id:' + monitor_user.user_id + ' call api.destroy_friendship with ' + user.user_id + ' success'
     return render_template('site/index.html')
 
+# 表单数据只能从request.args接收
+# @bp.route('/search/<keyword>/<int:page>')
+# @bp.route('/search/<keyword>/', defaults={'page': 1})
+# @bp.route('/search/', defaults={'keyword': None, 'page': 1})
+
 
 @bp.route('/search/', defaults={'page': 1})
 @bp.route('/search/<int:page>')
 def search(page):
     """模糊查找指定内容的推文"""
-    keyword = request.args.get('keyword', '')
+    keyword = request.args.get("keyword", '')
     if not keyword:
         flash('请输入要查找的推文关键字')
         return redirect(url_for('site.tweets'))
     else:
-        # 从接口中读查询结果并显示
-        # url = "https://api.douban.com/v2/user/%d" % user_id
-        # user_info = requests.get(url).json()
-
-        # url = "https://www.douban.com/service/auth2/token"
-        # config = current_app.config
-        # data = {
-        #     'client_id': config.get('DOUBAN_CLIENT_ID'),
-        #     'client_secret': config.get('DOUBAN_SECRET'),
-        #     'redirect_uri': config.get('DOUBAN_REDIRECT_URI'),
-        #     'grant_type': 'authorization_code',
-        #     'code': code
-        # }
-        # res = requests.post(url, data=data).json()
         statuses = Status.query.filter(
             Status.text.like('%' + keyword + '%')).order_by(Status.created_at.desc())
         statuses_count = len(statuses.all())
@@ -709,9 +700,48 @@ def search(page):
             return render_template('site/statuses.html', statuses=statuses, statuses_count=statuses_count)
 
 
+@bp.route('/strict_search/', defaults={'page': 1})
+@bp.route('/strict_search/<int:page>')
+def strict_search(page):
+    keyword = request.args.get("keyword", '')
+    if not keyword:
+        flash('请输入要查找的推文关键字')
+        return render_template('site/strict_search_results.html')
+    else:
+        # 从接口中读模糊查询结果并显示
+        url = current_app.config['QUERY_URL']
+        rets = requests.get(url % keyword).json()
+        if rets:
+            docs = rets['response']['docs']
+            # 使用paginate组件对docs　list进行分页,并传递到common.html中进行页面显示
+            from paginate import Page
+            my_page = Page(
+                docs, page=page, items_per_page=current_app.config['ITEMS_PER_PAGE'])
+            return render_template('site/strict_search_results_with_new_paginator.html', my_page=my_page)
+        else:
+            flash('抱歉，未找到与"' + keyword + '"相关的推文')
+            return render_template('site/strict_search_results.html')
+
+        # 直接从数据表中模糊查询
+        # statuses = Status.query.filter(
+        #     Status.text.like('%' + keyword + '%')).order_by(Status.created_at.desc())
+        # statuses_count = len(statuses.all())
+        # statuses = statuses.paginate(page,
+        #                              current_app.config['STATUS_PER_PAGE'],
+        #                              error_out=True
+        #                              )
+        # if not statuses.items:
+        #     flash('抱歉，未找到与"' + keyword + '"相关的推文')
+        #     return render_template('site/strict_search_results.html')
+        # else:
+        # return render_template('site/strict_search_results.html',
+        # statuses=statuses, statuses_count=statuses_count)
+
+
 @bp.route('/')
 def about():
-    return render_template('site/about.html')
+    # return render_template('site/about.html')
+    return redirect(url_for('site.strict_search'))
 
 
 @bp.route('/dev')

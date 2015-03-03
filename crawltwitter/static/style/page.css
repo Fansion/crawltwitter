@@ -162,6 +162,10 @@ h2 {
 img {
   display: none;
 }
+#page-strict-search .input-sm {
+  width: 40%;
+  float: left;
+}
 /*#page-user .meta a {
   font-weight:normal;
 }

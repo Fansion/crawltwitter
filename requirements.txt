@@ -13,3 +13,4 @@ fabric
 gevent
 gunicorn
 flask-moment
+paginate

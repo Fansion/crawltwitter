@@ -17,7 +17,13 @@ crawltwitter.conf
 
 fabfile.py
 
-crawltwitter/templates/site/facebook.html
+crawltwitter/templates/facebook_base.html
+crawltwitter/templates/site/facebook_login.html
+crawltwitter/templates/site/facebook_bak.html
+crawltwitter/static/style/facebook_style.css
+crawltwitter/templates/site/strict_search_results.html
+crawltwitter/templates/site/strict_search.html
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

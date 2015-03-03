@@ -1,3 +1,26 @@
+{# 配合paginate组件进行分页 #}
+{% macro paginate_pagination(paginator) %}
+   {% if paginator.page_count > 1 %}
+      <ul class='pagination pagination-sm'>
+         {% if paginator.previous_page %}
+            <li><a href="{{ url_for_other_page(paginator.previous_page) }}">上一页</a></li>
+         {% endif %}
+
+         {% for page in range(1, paginator.page_count+1) %}
+            {% if page != paginator.page %}
+              <li><a href="{{ url_for_other_page(page) }}">{{ page }}</a></li>
+            {% else %}
+              <li class="active"><span>{{ page }}</span></li>
+            {% endif %}
+         {% endfor %}
+
+         {% if paginator.next_page %}
+            <li><a href="{{ url_for_other_page(paginator.next_page) }}">下一页</a></li>
+         {% endif %}
+      </ul>
+   {% endif %}
+{% endmacro %}
+
 {% macro pagination(paginator) %}
    {% if paginator.pages > 1 %}
       <ul class='pagination pagination-sm'>

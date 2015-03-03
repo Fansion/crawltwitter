@@ -1,0 +1,32 @@
+{% extends "site/strict_search.html" %}
+{% from "macro/common.html" import  paginate_pagination %}
+
+{% block body %}
+    {{ super() }}
+    <div class="row">
+        <hr />
+        {% if my_page.items %}
+            {% for status in my_page.items %}
+                <div id="user-info">
+                    <span id="user-source">{{ status.source_name }}</span>
+                    <span id="user-sn"><a href="{{ status.url }}" id="user-url" target="_blank">@{{ status.nickname }}</a></span><br />
+                    <span class="meta">
+                        <span id="user-loc">{{ status.location }},</span>
+                        <span id="user-ip">{{ status.ip }},</span>
+                        {{ status.timestamp }}
+                    </span>
+                </div>
+                <div class="tweet-item">
+                    <div class="tweet">
+                        <p>{{ status.content }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h5 class="table">暂无</h5>
+        {% endif %}
+        {% if my_page %}
+            {{ paginate_pagination(my_page) }}
+        {% endif %}
+    </div>
+{% endblock %}
