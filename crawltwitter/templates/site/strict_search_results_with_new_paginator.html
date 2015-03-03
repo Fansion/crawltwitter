@@ -9,7 +9,11 @@
             {% for status in my_page.items %}
                 <div id="user-info">
                     <span id="user-source">{{ status.source_name }}</span>
-                    <span id="user-sn"><a href="{{ status.url }}" id="user-url" target="_blank">@{{ status.nickname }}</a></span><br />
+                    {% if status.nickname %}
+                        <span id="user-sn"><a href="{{ status.url }}" id="user-url" target="_blank">@{{ status.nickname }}</a></span><br />
+                    {% else %}
+                        <span id="user-sn"><a href="{{ status.url }}" id="user-url" target="_blank">@佚名</a></span><br />
+                    {% endif %}
                     <span class="meta">
                         <span id="user-loc">{{ status.location }},</span>
                         <span id="user-ip">{{ status.ip }},</span>

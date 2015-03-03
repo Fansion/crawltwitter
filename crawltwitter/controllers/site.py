@@ -740,8 +740,8 @@ def strict_search(page):
 
 @bp.route('/')
 def about():
-    # return render_template('site/about.html')
-    return redirect(url_for('site.strict_search'))
+    return render_template('site/about.html')
+    # return redirect(url_for('site.strict_search'))
 
 
 @bp.route('/dev')
